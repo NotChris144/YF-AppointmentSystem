@@ -6,6 +6,7 @@ import PainPoints from '../components/PainPoints';
 import SaleTemperature from '../components/SaleTemperature';
 import DateTimePicker from '../components/ui/DateTimePicker';
 import { useAppointmentStore } from '../store/appointmentStore';
+import { Button } from './ui/Button';
 
 const RevisitForm: React.FC = () => {
   const navigate = useNavigate();
@@ -15,7 +16,9 @@ const RevisitForm: React.FC = () => {
     scheduledDate,
     togglePainPoint,
     setScheduledDate,
-    submitAppointment
+    submitAppointment,
+    customerInfo,
+    providerDetails
   } = useAppointmentStore();
   const [step, setStep] = useState(1);
 
@@ -38,8 +41,12 @@ const RevisitForm: React.FC = () => {
   };
 
   const handleSubmit = () => {
-    submitAppointment('revisit');
-    navigate('/');
+    try {
+      submitAppointment('revisit');
+      navigate('/');
+    } catch (error) {
+      console.error('Error submitting appointment:', error);
+    }
   };
 
   const renderStepContent = () => {
@@ -121,12 +128,12 @@ const RevisitForm: React.FC = () => {
           >
             {step === 1 ? 'Cancel' : 'Back'}
           </button>
-          <button
+          <Button
             onClick={step === 2 ? handleSubmit : handleNext}
             className="px-6 py-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors"
           >
             {step === 2 ? 'Submit' : 'Continue'}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

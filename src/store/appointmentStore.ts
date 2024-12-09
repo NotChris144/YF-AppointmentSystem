@@ -68,7 +68,14 @@ export const useAppointmentStore = create<AppointmentState>()(
           scheduledFor: state.scheduledDate,
           customerInfo: state.customerInfo as CustomerInfo,
           providerDetails: state.providerDetails as ProviderDetails,
-          selectedPackage: state.selectedPackage!,
+          selectedPackage: state.selectedPackage || {
+            id: 'default',
+            name: 'Default Package',
+            price: 0,
+            speed: 0,
+            description: '',
+            features: []
+          },
           selectedAddons: state.selectedAddons,
           painPoints: state.painPoints,
           temperature: result.temperature,
