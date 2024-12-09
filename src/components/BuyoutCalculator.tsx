@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AlertTriangle, Wifi } from 'lucide-react';
+import useDevice from '../hooks/useDevice';
 
 interface SpeedTestData {
   download: number;
@@ -7,6 +8,7 @@ interface SpeedTestData {
 }
 
 const BuyoutCalculator: React.FC = () => {
+  const { isMobile, isTablet } = useDevice();
   const [provider, setProvider] = useState('');
   const [monthlyBill, setMonthlyBill] = useState('');
   const [estimatedSpeed, setEstimatedSpeed] = useState(0);
@@ -21,10 +23,10 @@ const BuyoutCalculator: React.FC = () => {
 
   const providers = ['BT', 'Sky', 'TalkTalk', 'Virgin Media', 'Vodafone', 'Other'];
   const presetPeriods = [
-    { label: '6 Months', value: '6' },
-    { label: '12 Months', value: '12' },
-    { label: '18 Months', value: '18' },
-    { label: '24 Months', value: '24' }
+    { label: isMobile ? '6M' : '6 Months', value: '6' },
+    { label: isMobile ? '12M' : '12 Months', value: '12' },
+    { label: isMobile ? '18M' : '18 Months', value: '18' },
+    { label: isMobile ? '24M' : '24 Months', value: '24' }
   ];
 
   const calculateMonthsRemaining = () => {
@@ -62,14 +64,16 @@ const BuyoutCalculator: React.FC = () => {
   const { totalCost, amountToPay, canBuyoutInFull } = calculateBuyout();
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${isMobile ? 'text-sm' : 'text-base'}`}>
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-1">Current Provider</label>
+          <label className="block font-medium mb-1">Current Provider</label>
           <select
             value={provider}
             onChange={(e) => setProvider(e.target.value)}
-            className="w-full p-2 rounded-md border border-input bg-background"
+            className={`w-full ${
+              isMobile ? 'p-2 text-base' : 'p-3'
+            } rounded-md border border-input bg-background`}
           >
             <option value="">Select Provider</option>
             {providers.map(p => (
@@ -79,19 +83,21 @@ const BuyoutCalculator: React.FC = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Monthly Cost (£)</label>
+          <label className="block font-medium mb-1">Monthly Cost (£)</label>
           <input
             type="number"
             value={monthlyBill}
             onChange={(e) => setMonthlyBill(e.target.value)}
-            className="w-full p-2 rounded-md border border-input bg-background"
+            className={`w-full ${
+              isMobile ? 'p-2 text-base' : 'p-3'
+            } rounded-md border border-input bg-background`}
             placeholder="0.00"
             step="0.01"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">
+          <label className="block font-medium mb-1">
             Estimated Speed (Mbps)
           </label>
           <div className="space-y-2">
@@ -103,59 +109,80 @@ const BuyoutCalculator: React.FC = () => {
               onChange={(e) => setEstimatedSpeed(parseInt(e.target.value))}
               className="w-full"
             />
-            <input
-              type="number"
-              value={estimatedSpeed}
-              onChange={(e) => setEstimatedSpeed(parseInt(e.target.value) || 0)}
-              className="w-full p-2 rounded-md border border-input bg-background"
-              placeholder="Enter speed"
-            />
+            <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} gap-2`}>
+              <input
+                type="number"
+                value={estimatedSpeed}
+                onChange={(e) => setEstimatedSpeed(parseInt(e.target.value) || 0)}
+                className={`w-full ${
+                  isMobile ? 'p-2 text-base' : 'p-3'
+                } rounded-md border border-input bg-background`}
+                placeholder="Enter speed"
+              />
+              <p className="text-right self-center text-gray-400">
+                {estimatedSpeed} Mbps
+              </p>
+            </div>
           </div>
         </div>
 
         <button
           onClick={() => setShowSpeedTest(!showSpeedTest)}
-          className="w-full p-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-md flex items-center justify-center gap-2"
+          className={`w-full ${
+            isMobile ? 'p-2 text-sm' : 'p-3'
+          } bg-primary/10 hover:bg-primary/20 text-primary rounded-md flex items-center justify-center gap-2`}
         >
-          <Wifi className="w-4 h-4" />
+          <Wifi className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
           Speed Test Benchmark
         </button>
 
         {showSpeedTest && (
-          <div className="space-y-4 p-4 bg-card/50 rounded-md">
-            <div>
-              <label className="block text-sm font-medium mb-1">Download Speed (Mbps)</label>
-              <input
-                type="number"
-                value={actualSpeed.download}
-                onChange={(e) => setActualSpeed({ ...actualSpeed, download: parseFloat(e.target.value) || 0 })}
-                className="w-full p-2 rounded-md border border-input bg-background"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Upload Speed (Mbps)</label>
-              <input
-                type="number"
-                value={actualSpeed.upload}
-                onChange={(e) => setActualSpeed({ ...actualSpeed, upload: parseFloat(e.target.value) || 0 })}
-                className="w-full p-2 rounded-md border border-input bg-background"
-              />
+          <div className={`space-y-4 ${
+            isMobile ? 'p-3' : 'p-4'
+          } bg-card/50 rounded-md`}>
+            <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} gap-4`}>
+              <div>
+                <label className="block font-medium mb-1">Download Speed (Mbps)</label>
+                <input
+                  type="number"
+                  value={actualSpeed.download}
+                  onChange={(e) => setActualSpeed({ ...actualSpeed, download: parseFloat(e.target.value) || 0 })}
+                  className={`w-full ${
+                    isMobile ? 'p-2 text-base' : 'p-3'
+                  } rounded-md border border-input bg-background`}
+                />
+              </div>
+              <div>
+                <label className="block font-medium mb-1">Upload Speed (Mbps)</label>
+                <input
+                  type="number"
+                  value={actualSpeed.upload}
+                  onChange={(e) => setActualSpeed({ ...actualSpeed, upload: parseFloat(e.target.value) || 0 })}
+                  className={`w-full ${
+                    isMobile ? 'p-2 text-base' : 'p-3'
+                  } rounded-md border border-input bg-background`}
+                />
+              </div>
             </div>
           </div>
         )}
 
         {hasSpeedDifference() && (
-          <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-md flex gap-2">
-            <AlertTriangle className="w-5 h-5 text-yellow-500 flex-shrink-0" />
-            <p className="text-sm text-yellow-500">
+          <div className={`${
+            isMobile ? 'p-3 text-sm' : 'p-4'
+          } bg-yellow-500/10 border border-yellow-500/20 rounded-md flex gap-2`}>
+            <AlertTriangle className={`${
+              isMobile ? 'w-4 h-4' : 'w-5 h-5'
+            } text-yellow-500 flex-shrink-0`} />
+            <p className="text-yellow-500">
               Significant speed difference detected. Your actual speed is {Math.abs(Math.round((estimatedSpeed - actualSpeed.download) / estimatedSpeed * 100))}% different from the expected speed.
             </p>
           </div>
         )}
 
         <div className="space-y-4">
-          <label className="block text-sm font-medium">Contract End Date</label>
-          <div className="flex flex-wrap gap-2">
+          <label className="block font-medium">Contract End Date</label>
+          <div className={`flex flex-wrap gap-2 ${isMobile ? 'justify-between' : ''}`}>
             {presetPeriods.map(period => (
               <button
                 key={period.value}
@@ -163,7 +190,9 @@ const BuyoutCalculator: React.FC = () => {
                   setContractEndType('preset');
                   setContractLength(period.value);
                 }}
-                className={`px-4 py-2 rounded-md transition-colors ${
+                className={`${
+                  isMobile ? 'px-3 py-1.5 text-sm' : 'px-4 py-2'
+                } rounded-md transition-colors ${
                   contractEndType === 'preset' && contractLength === period.value
                     ? 'bg-primary text-white'
                     : 'bg-card hover:bg-primary/10'
@@ -182,26 +211,36 @@ const BuyoutCalculator: React.FC = () => {
                 setContractEndType('custom');
                 setCustomDate(e.target.value);
               }}
-              className="flex-1 p-2 rounded-md border border-input bg-background"
+              className={`flex-1 ${
+                isMobile ? 'p-2 text-sm' : 'p-3'
+              } rounded-md border border-input bg-background`}
               min={new Date().toISOString().split('T')[0]}
             />
           </div>
         </div>
       </div>
 
-      <div className="space-y-4 p-6 bg-card/50 rounded-lg">
-        <div className="grid grid-cols-2 gap-4">
+      <div className={`space-y-4 ${
+        isMobile ? 'p-4' : 'p-6'
+      } bg-card/50 rounded-lg`}>
+        <div className={`grid ${isMobile ? 'grid-cols-1 gap-3' : 'grid-cols-2 gap-4'}`}>
           <div>
-            <p className="text-sm text-gray-400">Months Remaining</p>
-            <p className="text-xl font-semibold">{calculateMonthsRemaining()}</p>
+            <p className="text-gray-400">Months Remaining</p>
+            <p className={`${
+              isMobile ? 'text-lg' : 'text-xl'
+            } font-semibold`}>{calculateMonthsRemaining()}</p>
           </div>
           <div>
-            <p className="text-sm text-gray-400">Total Cost (ex. VAT)</p>
-            <p className="text-xl font-semibold">£{totalCost.toFixed(2)}</p>
+            <p className="text-gray-400">Total Cost (ex. VAT)</p>
+            <p className={`${
+              isMobile ? 'text-lg' : 'text-xl'
+            } font-semibold`}>£{totalCost.toFixed(2)}</p>
           </div>
         </div>
 
-        <div className={`p-4 rounded-md ${
+        <div className={`${
+          isMobile ? 'p-3' : 'p-4'
+        } rounded-md ${
           canBuyoutInFull 
             ? 'bg-green-500/10 border border-green-500/20' 
             : 'bg-yellow-500/10 border border-yellow-500/20'
@@ -215,7 +254,9 @@ const BuyoutCalculator: React.FC = () => {
               <p className="text-yellow-500 font-medium">
                 Additional payment required
               </p>
-              <p className="text-sm text-yellow-500/80">
+              <p className={`${
+                isMobile ? 'text-sm' : 'text-base'
+              } text-yellow-500/80`}>
                 Customer needs to pay: £{amountToPay.toFixed(2)}
               </p>
             </div>

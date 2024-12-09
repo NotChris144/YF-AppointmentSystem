@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Calculator } from 'lucide-react';
 import BuyoutCalculator from '../components/BuyoutCalculator';
+import useDevice from '../hooks/useDevice';
 
 const HomePage: React.FC = () => {
   const [activeToolId, setActiveToolId] = useState<string | null>(null);
+  const { isMobile, isTablet, isDesktop } = useDevice();
 
   const tools = [
     {
@@ -21,30 +23,48 @@ const HomePage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 p-4 max-w-4xl mx-auto">
+    <div className={`space-y-8 ${isMobile ? 'px-4' : 'px-8'} py-6`}>
       <section className="text-center space-y-4">
-        <h1 className="text-4xl font-bold">Sales Tools Hub</h1>
-        <p className="text-lg text-gray-400 max-w-2xl mx-auto">
+        <h1 className={`font-bold ${isMobile ? 'text-3xl' : 'text-4xl'}`}>
+          Sales Tools Hub
+        </h1>
+        <p className={`text-gray-400 max-w-2xl mx-auto ${isMobile ? 'text-base' : 'text-lg'}`}>
           Access powerful tools to streamline your sales process
         </p>
       </section>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className={`grid gap-6 ${
+        isDesktop 
+          ? 'lg:grid-cols-3 md:grid-cols-2' 
+          : isTablet 
+            ? 'grid-cols-2' 
+            : 'grid-cols-1'
+      }`}>
         {tools.map((tool) => (
           <div key={tool.id} className="col-span-1">
             <button
               onClick={() => handleToolClick(tool.id)}
-              className="w-full p-6 bg-card rounded-lg border border-border hover:border-primary transition-colors text-left"
+              className={`w-full ${
+                isMobile ? 'p-4' : 'p-6'
+              } bg-card rounded-lg border border-border hover:border-primary transition-colors text-left`}
             >
               <div className="flex items-center gap-3 mb-4">
-                <tool.icon className="w-6 h-6 text-primary" />
-                <h2 className="text-xl font-semibold">{tool.title}</h2>
+                <tool.icon className={`${isMobile ? 'w-5 h-5' : 'w-6 h-6'} text-primary`} />
+                <h2 className={`font-semibold ${isMobile ? 'text-lg' : 'text-xl'}`}>
+                  {tool.title}
+                </h2>
               </div>
-              <p className="text-gray-400">{tool.description}</p>
+              <p className={`text-gray-400 ${isMobile ? 'text-sm' : 'text-base'}`}>
+                {tool.description}
+              </p>
             </button>
             
             {activeToolId === tool.id && (
-              <div className="mt-4 p-6 bg-card rounded-lg border border-border">
+              <div className={`mt-4 ${
+                isMobile ? 'p-4' : 'p-6'
+              } bg-card rounded-lg border border-border ${
+                isDesktop ? 'lg:fixed lg:top-24 lg:left-1/2 lg:-translate-x-1/2 lg:w-[800px] lg:max-h-[80vh] lg:overflow-y-auto' : ''
+              }`}>
                 <tool.component />
               </div>
             )}
