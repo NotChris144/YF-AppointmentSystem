@@ -102,13 +102,13 @@ const BuyoutCalculator: React.FC = () => {
 
       const rect = speedoRef.current.getBoundingClientRect();
       const centerX = rect.left + (rect.width / 2);
-      const centerY = rect.bottom;
+      const centerY = rect.top;
       
       // Calculate angle from mouse position relative to center
       const angle = Math.atan2(
-        -(event.clientX - centerX),
+        event.clientX - centerX,
         -(event.clientY - centerY)
-      ) * (180 / Math.PI) + 180;
+      ) * (180 / Math.PI);
 
       // Clamp angle between 0 and 180
       const clampedAngle = Math.max(0, Math.min(180, angle));
@@ -159,8 +159,11 @@ const BuyoutCalculator: React.FC = () => {
         <div className="absolute inset-0 flex items-center justify-center">
           <div 
             ref={speedoRef}
-            className="w-4/5 h-4/5 rounded-full border-[16px] border-gray-800/50 cursor-pointer" 
-            style={{ clipPath: 'polygon(0 50%, 100% 50%, 100% 100%, 0 100%)' }}
+            className="w-4/5 h-4/5 rounded-full border-[16px] border-gray-800/30 cursor-pointer" 
+            style={{ 
+              clipPath: 'polygon(0 0, 100% 0, 100% 50%, 0 50%)',
+              transform: 'rotate(180deg)'
+            }}
             onMouseDown={handleMouseDown}
           />
         </div>
@@ -169,12 +172,15 @@ const BuyoutCalculator: React.FC = () => {
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-4/5 h-4/5 rounded-full border-[16px]"
                style={{
-                 clipPath: 'polygon(0 50%, 100% 50%, 100% 100%, 0 100%)',
+                 clipPath: 'polygon(0 0, 100% 0, 100% 50%, 0 50%)',
                  borderImage: `conic-gradient(
-                   from 180deg,
-                   ${gradientStops.map(stop => `${stop.color} ${stop.position}%`).join(', ')}
+                   from 0deg,
+                   ${type === 'download' 
+                     ? '#2dd4bf 0%, #06b6d4 100%'  // teal to cyan for download
+                     : '#06b6d4 0%, #2dd4bf 100%'  // cyan to teal for upload
+                   }
                  ) 1`,
-                 transform: `rotate(${angle}deg)`,
+                 transform: `rotate(${180 + angle}deg)`,
                  transition: isDragging ? 'none' : 'transform 0.3s ease-out'
                }} />
         </div>
@@ -187,11 +193,17 @@ const BuyoutCalculator: React.FC = () => {
               return (
                 <div
                   key={marker}
-                  className="absolute left-1/2 bottom-0 -translate-x-1/2 origin-[50%_0%] text-gray-400 text-sm"
+                  className="absolute left-1/2 top-0 -translate-x-1/2 origin-[50%_100%] text-gray-500/50 text-xs"
                   style={{ transform: `rotate(${markerAngle}deg)` }}
                 >
-                  <div className="h-4 w-px bg-gray-700 mb-1" />
-                  <span className="inline-block" style={{ transform: `rotate(-${markerAngle}deg)` }}>
+                  <div className="h-3 w-px bg-gray-700/30 mb-1" />
+                  <span 
+                    className="inline-block" 
+                    style={{ 
+                      transform: `rotate(180deg)`,
+                      opacity: marker % 400 === 0 ? 1 : 0.5
+                    }}
+                  >
                     {marker}
                   </span>
                 </div>
@@ -201,7 +213,7 @@ const BuyoutCalculator: React.FC = () => {
         </div>
 
         {/* Current Speed Display */}
-        <div className="absolute bottom-12 text-center">
+        <div className="absolute bottom-8 text-center">
           {isEditing ? (
             <input
               type="number"
@@ -212,19 +224,21 @@ const BuyoutCalculator: React.FC = () => {
               autoFocus
             />
           ) : (
-            <div 
-              className="text-4xl font-bold text-cyan-400 cursor-pointer"
-              onClick={() => setIsEditing(true)}
-            >
-              {value.toFixed(0)}
-            </div>
+            <>
+              <div 
+                className="text-4xl font-bold text-cyan-400 cursor-pointer"
+                onClick={() => setIsEditing(true)}
+              >
+                {value.toFixed(0)}
+              </div>
+              <div className="text-sm text-gray-400">Mbps</div>
+            </>
           )}
-          <div className="text-sm text-gray-400">Mbps</div>
         </div>
 
         {/* Speed Type Indicator */}
-        <div className="absolute top-4 text-center">
-          <div className="flex items-center gap-2 text-gray-400">
+        <div className="absolute top-0 text-center">
+          <div className="flex items-center gap-2 text-gray-400 pb-4">
             {type === 'download' ? <ArrowDownIcon className="w-5 h-5" /> : <ArrowUpIcon className="w-5 h-5" />}
             <span className="text-sm font-medium">{type === 'download' ? 'Download' : 'Upload'}</span>
           </div>
