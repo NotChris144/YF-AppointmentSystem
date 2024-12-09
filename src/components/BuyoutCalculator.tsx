@@ -159,11 +159,23 @@ const BuyoutCalculator: React.FC = () => {
                 {estimatedSpeed} <span className="text-base font-normal text-gray-500">Mbps</span>
               </motion.span>
             </div>
-            <div className="relative h-3 rounded-full bg-primary/10 overflow-hidden">
+            <div className="relative h-3 rounded-full bg-primary/5 overflow-hidden shadow-lg">
+              <div 
+                className="absolute inset-0 bg-gradient-to-r from-blue-500 via-yellow-500 to-red-500 opacity-50"
+              />
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${(estimatedSpeed / 1000) * 100}%` }}
-                className="absolute inset-0 bg-primary"
+                className="absolute inset-0 bg-gradient-to-r from-blue-500 via-yellow-500 to-red-500 shadow-[0_0_15px_rgba(59,130,246,0.5)]"
+                style={{
+                  boxShadow: `0 0 20px ${
+                    estimatedSpeed < 333 
+                      ? 'rgba(59,130,246,0.5)' // blue glow
+                      : estimatedSpeed < 666 
+                        ? 'rgba(234,179,8,0.5)' // yellow glow
+                        : 'rgba(239,68,68,0.5)' // red glow
+                  }`
+                }}
                 transition={{ type: "spring", stiffness: 100 }}
               />
               <input
@@ -175,57 +187,61 @@ const BuyoutCalculator: React.FC = () => {
                 className="absolute inset-0 opacity-0 cursor-pointer"
               />
             </div>
+            <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <span>Slow</span>
+              <span>Fast</span>
+            </div>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setShowSpeedTest(!showSpeedTest)}
+              className="w-full p-4 bg-primary/5 hover:bg-primary/10 text-primary rounded-lg flex items-center justify-center gap-2 transition-all"
+            >
+              <Wifi className="w-5 h-5" />
+              Speed Test
+            </motion.button>
+
+            <AnimatePresence>
+              {showSpeedTest && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="space-y-4 overflow-hidden"
+                >
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <span className="text-sm text-gray-500">Download</span>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={actualSpeed.download}
+                          onChange={(e) => setActualSpeed({ ...actualSpeed, download: parseFloat(e.target.value) || 0 })}
+                          className="w-full p-3 bg-transparent border-none focus:ring-0 text-xl font-medium"
+                          placeholder="0"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">Mbps</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <span className="text-sm text-gray-500">Upload</span>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={actualSpeed.upload}
+                          onChange={(e) => setActualSpeed({ ...actualSpeed, upload: parseFloat(e.target.value) || 0 })}
+                          className="w-full p-3 bg-transparent border-none focus:ring-0 text-xl font-medium"
+                          placeholder="0"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">Mbps</span>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setShowSpeedTest(!showSpeedTest)}
-            className="w-full p-4 bg-primary/5 hover:bg-primary/10 text-primary rounded-lg flex items-center justify-center gap-2 transition-all"
-          >
-            <Wifi className="w-5 h-5" />
-            Speed Test
-          </motion.button>
-
-          <AnimatePresence>
-            {showSpeedTest && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="space-y-4 overflow-hidden"
-              >
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <span className="text-sm text-gray-500">Download</span>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        value={actualSpeed.download}
-                        onChange={(e) => setActualSpeed({ ...actualSpeed, download: parseFloat(e.target.value) || 0 })}
-                        className="w-full p-3 bg-transparent border-none focus:ring-0 text-xl font-medium"
-                        placeholder="0"
-                      />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">Mbps</span>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <span className="text-sm text-gray-500">Upload</span>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        value={actualSpeed.upload}
-                        onChange={(e) => setActualSpeed({ ...actualSpeed, upload: parseFloat(e.target.value) || 0 })}
-                        className="w-full p-3 bg-transparent border-none focus:ring-0 text-xl font-medium"
-                        placeholder="0"
-                      />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">Mbps</span>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </motion.div>
 
         {/* Contract Length */}
