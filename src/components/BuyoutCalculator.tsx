@@ -88,12 +88,10 @@ const BuyoutCalculator: React.FC = () => {
     const speedoRef = React.useRef<HTMLDivElement>(null);
 
     const calculateSpeedFromAngle = (angle: number) => {
-      // Convert angle (0-180) to speed (0-maxValue)
       return (angle / 180) * maxValue;
     };
 
     const calculateAngleFromSpeed = (speed: number) => {
-      // Convert speed to angle (0-180)
       return (speed / maxValue) * 180;
     };
 
@@ -102,12 +100,11 @@ const BuyoutCalculator: React.FC = () => {
 
       const rect = speedoRef.current.getBoundingClientRect();
       const centerX = rect.left + (rect.width / 2);
-      const centerY = rect.top;
+      const centerY = rect.bottom;
       
-      // Calculate angle from mouse position relative to center
       const angle = Math.atan2(
         event.clientX - centerX,
-        -(event.clientY - centerY)
+        event.clientY - centerY
       ) * (180 / Math.PI);
 
       // Clamp angle between 0 and 180
@@ -144,103 +141,97 @@ const BuyoutCalculator: React.FC = () => {
     }, [isDragging]);
 
     const angle = calculateAngleFromSpeed(value);
-    const gradientStops = [
-      { color: '#06b6d4', position: 0 },    // cyan-500
-      { color: '#06b6d4', position: 20 },   // cyan-500
-      { color: '#2dd4bf', position: 40 },   // teal-400
-      { color: '#34d399', position: 60 },   // emerald-400
-      { color: '#6ee7b7', position: 80 },   // emerald-300
-      { color: '#a7f3d0', position: 100 },  // emerald-200
-    ];
 
     return (
-      <div className="relative w-full aspect-[4/3] flex items-center justify-center">
-        {/* Background Arc */}
-        <div className="absolute inset-0 flex items-center justify-center">
+      <div className="relative w-full aspect-[2/1]">
+        {/* Type Indicator */}
+        <div className="absolute -top-6 left-1/2 -translate-x-1/2 flex items-center gap-2 text-gray-400">
+          {type === 'download' ? <ArrowDownIcon className="w-5 h-5" /> : <ArrowUpIcon className="w-5 h-5" />}
+          <span className="text-sm font-medium">{type === 'download' ? 'Download' : 'Upload'}</span>
+        </div>
+
+        <div className="relative w-full h-full flex items-end justify-center">
+          {/* Background Track */}
           <div 
             ref={speedoRef}
-            className="w-4/5 h-4/5 rounded-full border-[16px] border-gray-800/30 cursor-pointer" 
-            style={{ 
-              clipPath: 'polygon(0 0, 100% 0, 100% 50%, 0 50%)',
-              transform: 'rotate(180deg)'
+            className="absolute bottom-0 w-full h-[200%] cursor-pointer"
+            style={{
+              clipPath: 'path("M 0 100% A 100 100 0 0 1 100% 100%")',
             }}
             onMouseDown={handleMouseDown}
-          />
-        </div>
-        
-        {/* Colored Progress Arc */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-4/5 h-4/5 rounded-full border-[16px]"
-               style={{
-                 clipPath: 'polygon(0 0, 100% 0, 100% 50%, 0 50%)',
-                 borderImage: `conic-gradient(
-                   from 0deg,
-                   ${type === 'download' 
-                     ? '#2dd4bf 0%, #06b6d4 100%'  // teal to cyan for download
-                     : '#06b6d4 0%, #2dd4bf 100%'  // cyan to teal for upload
-                   }
-                 ) 1`,
-                 transform: `rotate(${180 + angle}deg)`,
-                 transition: isDragging ? 'none' : 'transform 0.3s ease-out'
-               }} />
-        </div>
-
-        {/* Speed Markers */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-4/5 h-4/5 relative">
-            {[0, 200, 400, 600, 800, 1000].map((marker) => {
-              const markerAngle = (marker / maxValue) * 180;
-              return (
-                <div
-                  key={marker}
-                  className="absolute left-1/2 top-0 -translate-x-1/2 origin-[50%_100%] text-gray-500/50 text-xs"
-                  style={{ transform: `rotate(${markerAngle}deg)` }}
-                >
-                  <div className="h-3 w-px bg-gray-700/30 mb-1" />
-                  <span 
-                    className="inline-block" 
-                    style={{ 
-                      transform: `rotate(180deg)`,
-                      opacity: marker % 400 === 0 ? 1 : 0.5
-                    }}
-                  >
-                    {marker}
-                  </span>
-                </div>
-              );
-            })}
+          >
+            <div className="w-full h-full border-[16px] border-gray-800/30 rounded-full" />
           </div>
-        </div>
 
-        {/* Current Speed Display */}
-        <div className="absolute bottom-8 text-center">
-          {isEditing ? (
-            <input
-              type="number"
-              value={value}
-              onChange={(e) => onChange(Math.min(maxValue, Math.max(0, Number(e.target.value))))}
-              onBlur={() => setIsEditing(false)}
-              className="w-24 text-4xl font-bold text-cyan-400 bg-transparent border-none text-center focus:ring-0"
-              autoFocus
+          {/* Progress Track */}
+          <div 
+            className="absolute bottom-0 w-full h-[200%] pointer-events-none"
+            style={{
+              clipPath: 'path("M 0 100% A 100 100 0 0 1 100% 100%")',
+              transform: `rotate(${angle}deg)`,
+              transformOrigin: 'bottom center',
+              transition: isDragging ? 'none' : 'transform 0.3s ease-out'
+            }}
+          >
+            <div 
+              className="w-full h-full border-[16px] rounded-full"
+              style={{
+                borderImage: `linear-gradient(to right, ${
+                  type === 'download' 
+                    ? '#2dd4bf, #06b6d4'  // teal to cyan for download
+                    : '#06b6d4, #2dd4bf'  // cyan to teal for upload
+                }) 1`
+              }}
             />
-          ) : (
-            <>
+          </div>
+
+          {/* Speed Value */}
+          <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 text-center">
+            {isEditing ? (
+              <input
+                type="number"
+                value={value}
+                onChange={(e) => onChange(Math.min(maxValue, Math.max(0, Number(e.target.value))))}
+                onBlur={() => setIsEditing(false)}
+                className="w-24 text-4xl font-bold text-cyan-400 bg-transparent border-none text-center focus:ring-0"
+                autoFocus
+              />
+            ) : (
               <div 
                 className="text-4xl font-bold text-cyan-400 cursor-pointer"
                 onClick={() => setIsEditing(true)}
               >
                 {value.toFixed(0)}
+                <span className="text-sm font-normal text-gray-400 ml-1">Mbps</span>
               </div>
-              <div className="text-sm text-gray-400">Mbps</div>
-            </>
-          )}
-        </div>
+            )}
+          </div>
 
-        {/* Speed Type Indicator */}
-        <div className="absolute top-0 text-center">
-          <div className="flex items-center gap-2 text-gray-400 pb-4">
-            {type === 'download' ? <ArrowDownIcon className="w-5 h-5" /> : <ArrowUpIcon className="w-5 h-5" />}
-            <span className="text-sm font-medium">{type === 'download' ? 'Download' : 'Upload'}</span>
+          {/* Speed Markers */}
+          <div className="absolute bottom-0 w-full h-[200%] pointer-events-none">
+            {[0, 200, 400, 600, 800, 1000].map((speed) => {
+              const markerAngle = calculateAngleFromSpeed(speed);
+              return (
+                <div
+                  key={speed}
+                  className="absolute bottom-0 left-1/2 w-px h-[3px] bg-gray-700/30"
+                  style={{
+                    transform: `rotate(${markerAngle}deg)`,
+                    transformOrigin: 'bottom center'
+                  }}
+                >
+                  <span 
+                    className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs text-gray-500/50"
+                    style={{ 
+                      transform: 'rotate(-90deg)',
+                      opacity: speed % 400 === 0 ? 1 : 0.5
+                    }}
+                  >
+                    {speed}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
