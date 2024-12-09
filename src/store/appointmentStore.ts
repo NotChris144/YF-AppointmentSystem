@@ -24,16 +24,20 @@ interface AppointmentState {
   reset: () => void;
 }
 
+const initialState = {
+  customerInfo: {},
+  providerDetails: {},
+  selectedPackage: null,
+  selectedAddons: [],
+  painPoints: [],
+  appointments: [],
+  scheduledDate: new Date()
+};
+
 export const useAppointmentStore = create<AppointmentState>()(
   persist(
     (set, get) => ({
-      customerInfo: {},
-      providerDetails: {},
-      selectedPackage: null,
-      selectedAddons: [],
-      painPoints: [],
-      appointments: [],
-      scheduledDate: new Date(),
+      ...initialState,
       setCustomerInfo: (info) =>
         set((state) => ({ customerInfo: { ...state.customerInfo, ...info } })),
       setProviderDetails: (details) =>
@@ -109,15 +113,7 @@ export const useAppointmentStore = create<AppointmentState>()(
               : apt
           ),
         })),
-      reset: () =>
-        set({
-          customerInfo: {},
-          providerDetails: {},
-          selectedPackage: null,
-          selectedAddons: [],
-          painPoints: [],
-          scheduledDate: new Date(),
-        }),
+      reset: () => set({ ...initialState, scheduledDate: new Date() }),
     }),
     {
       name: 'appointment-storage',
@@ -125,12 +121,12 @@ export const useAppointmentStore = create<AppointmentState>()(
         // Convert dates to ISO strings before storing
         const serializedState = {
           ...state,
-          scheduledDate: state.scheduledDate.toISOString(),
+          scheduledDate: state.scheduledDate ? state.scheduledDate.toISOString() : new Date().toISOString(),
           appointments: state.appointments.map(apt => ({
             ...apt,
-            scheduledFor: apt.scheduledFor.toISOString(),
-            createdAt: apt.createdAt.toISOString(),
-            updatedAt: apt.updatedAt.toISOString()
+            scheduledFor: apt.scheduledFor ? apt.scheduledFor.toISOString() : new Date().toISOString(),
+            createdAt: apt.createdAt ? apt.createdAt.toISOString() : new Date().toISOString(),
+            updatedAt: apt.updatedAt ? apt.updatedAt.toISOString() : new Date().toISOString()
           }))
         };
         return JSON.stringify(serializedState);
@@ -140,12 +136,12 @@ export const useAppointmentStore = create<AppointmentState>()(
         // Convert ISO strings back to Date objects
         return {
           ...parsed,
-          scheduledDate: new Date(parsed.scheduledDate),
-          appointments: parsed.appointments.map(apt => ({
+          scheduledDate: new Date(parsed.scheduledDate || new Date()),
+          appointments: (parsed.appointments || []).map(apt => ({
             ...apt,
-            scheduledFor: new Date(apt.scheduledFor),
-            createdAt: new Date(apt.createdAt),
-            updatedAt: new Date(apt.updatedAt)
+            scheduledFor: new Date(apt.scheduledFor || new Date()),
+            createdAt: new Date(apt.createdAt || new Date()),
+            updatedAt: new Date(apt.updatedAt || new Date())
           }))
         };
       }
