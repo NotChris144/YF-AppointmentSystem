@@ -1,10 +1,20 @@
 import React, { useState } from 'react';
-import { AlertTriangle, Wifi } from 'lucide-react';
+import { AlertTriangle, Wifi, Info } from 'lucide-react';
 import useDevice from '../hooks/useDevice';
 
 interface SpeedTestData {
   download: number;
   upload: number;
+}
+
+interface BuyoutBreakdown {
+  monthlyBill: number;
+  monthsRemaining: number;
+  totalWithVAT: number;
+  vatAmount: number;
+  totalExVAT: number;
+  contribution: number;
+  customerPayment: number;
 }
 
 const BuyoutCalculator: React.FC = () => {
@@ -17,6 +27,7 @@ const BuyoutCalculator: React.FC = () => {
   const [contractEndType, setContractEndType] = useState<'preset' | 'custom'>('preset');
   const [contractLength, setContractLength] = useState('6');
   const [customDate, setCustomDate] = useState('');
+  const [showBreakdown, setShowBreakdown] = useState(false);
 
   const BUYOUT_CONTRIBUTION = 300; // £300 contribution
   const VAT_RATE = 0.20; // 20% VAT
@@ -42,17 +53,22 @@ const BuyoutCalculator: React.FC = () => {
     return 0;
   };
 
-  const calculateBuyout = () => {
+  const calculateBreakdown = (): BuyoutBreakdown => {
     const monthlyAmount = parseFloat(monthlyBill) || 0;
     const months = calculateMonthsRemaining();
-    const totalCost = monthlyAmount * months;
-    const costExVAT = totalCost / (1 + VAT_RATE);
-    const amountToPay = Math.max(0, costExVAT - BUYOUT_CONTRIBUTION);
+    const totalWithVAT = monthlyAmount * months;
+    const totalExVAT = totalWithVAT / (1 + VAT_RATE);
+    const vatAmount = totalWithVAT - totalExVAT;
+    const customerPayment = Math.max(0, totalExVAT - BUYOUT_CONTRIBUTION);
     
     return {
-      totalCost: costExVAT,
-      amountToPay,
-      canBuyoutInFull: costExVAT <= BUYOUT_CONTRIBUTION
+      monthlyBill: monthlyAmount,
+      monthsRemaining: months,
+      totalWithVAT,
+      vatAmount,
+      totalExVAT,
+      contribution: Math.min(BUYOUT_CONTRIBUTION, totalExVAT),
+      customerPayment
     };
   };
 
@@ -61,7 +77,8 @@ const BuyoutCalculator: React.FC = () => {
            Math.abs(estimatedSpeed - actualSpeed.download) / estimatedSpeed > 0.2;
   };
 
-  const { totalCost, amountToPay, canBuyoutInFull } = calculateBuyout();
+  const breakdown = calculateBreakdown();
+  const canBuyoutInFull = breakdown.customerPayment === 0;
 
   return (
     <div className={`space-y-6 ${isMobile ? 'text-sm' : 'text-base'}`}>
@@ -73,7 +90,7 @@ const BuyoutCalculator: React.FC = () => {
             onChange={(e) => setProvider(e.target.value)}
             className={`w-full ${
               isMobile ? 'p-2 text-base' : 'p-3'
-            } rounded-md border border-input bg-background`}
+            } rounded-md border border-input bg-background hover:border-primary focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors`}
           >
             <option value="">Select Provider</option>
             {providers.map(p => (
@@ -90,7 +107,7 @@ const BuyoutCalculator: React.FC = () => {
             onChange={(e) => setMonthlyBill(e.target.value)}
             className={`w-full ${
               isMobile ? 'p-2 text-base' : 'p-3'
-            } rounded-md border border-input bg-background`}
+            } rounded-md border border-input bg-background hover:border-primary focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors`}
             placeholder="0.00"
             step="0.01"
           />
@@ -100,29 +117,39 @@ const BuyoutCalculator: React.FC = () => {
           <label className="block font-medium mb-1">
             Estimated Speed (Mbps)
           </label>
-          <div className="space-y-2">
-            <input
-              type="range"
-              min="0"
-              max="1000"
-              value={estimatedSpeed}
-              onChange={(e) => setEstimatedSpeed(parseInt(e.target.value))}
-              className="w-full"
-            />
-            <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} gap-2`}>
+          <div className="space-y-4">
+            <div className="relative pt-1">
+              <div className="flex mb-2 items-center justify-between">
+                <div>
+                  <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full bg-primary/10 text-primary">
+                    {estimatedSpeed} Mbps
+                  </span>
+                </div>
+              </div>
+              <div className="overflow-hidden h-2 text-xs flex rounded bg-primary/10">
+                <div
+                  style={{ width: `${(estimatedSpeed / 1000) * 100}%` }}
+                  className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-primary transition-all duration-300"
+                />
+              </div>
               <input
-                type="number"
+                type="range"
+                min="0"
+                max="1000"
                 value={estimatedSpeed}
-                onChange={(e) => setEstimatedSpeed(parseInt(e.target.value) || 0)}
-                className={`w-full ${
-                  isMobile ? 'p-2 text-base' : 'p-3'
-                } rounded-md border border-input bg-background`}
-                placeholder="Enter speed"
+                onChange={(e) => setEstimatedSpeed(parseInt(e.target.value))}
+                className="absolute inset-0 opacity-0 cursor-pointer"
               />
-              <p className="text-right self-center text-gray-400">
-                {estimatedSpeed} Mbps
-              </p>
             </div>
+            <input
+              type="number"
+              value={estimatedSpeed}
+              onChange={(e) => setEstimatedSpeed(parseInt(e.target.value) || 0)}
+              className={`w-full ${
+                isMobile ? 'p-2 text-base' : 'p-3'
+              } rounded-md border border-input bg-background hover:border-primary focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors`}
+              placeholder="Enter speed"
+            />
           </div>
         </div>
 
@@ -130,7 +157,7 @@ const BuyoutCalculator: React.FC = () => {
           onClick={() => setShowSpeedTest(!showSpeedTest)}
           className={`w-full ${
             isMobile ? 'p-2 text-sm' : 'p-3'
-          } bg-primary/10 hover:bg-primary/20 text-primary rounded-md flex items-center justify-center gap-2`}
+          } bg-primary/10 hover:bg-primary/20 text-primary rounded-md flex items-center justify-center gap-2 transition-colors`}
         >
           <Wifi className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
           Speed Test Benchmark
@@ -139,7 +166,7 @@ const BuyoutCalculator: React.FC = () => {
         {showSpeedTest && (
           <div className={`space-y-4 ${
             isMobile ? 'p-3' : 'p-4'
-          } bg-card/50 rounded-md`}>
+          } bg-card/50 rounded-md border border-border/50`}>
             <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} gap-4`}>
               <div>
                 <label className="block font-medium mb-1">Download Speed (Mbps)</label>
@@ -149,7 +176,7 @@ const BuyoutCalculator: React.FC = () => {
                   onChange={(e) => setActualSpeed({ ...actualSpeed, download: parseFloat(e.target.value) || 0 })}
                   className={`w-full ${
                     isMobile ? 'p-2 text-base' : 'p-3'
-                  } rounded-md border border-input bg-background`}
+                  } rounded-md border border-input bg-background hover:border-primary focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors`}
                 />
               </div>
               <div>
@@ -160,7 +187,7 @@ const BuyoutCalculator: React.FC = () => {
                   onChange={(e) => setActualSpeed({ ...actualSpeed, upload: parseFloat(e.target.value) || 0 })}
                   className={`w-full ${
                     isMobile ? 'p-2 text-base' : 'p-3'
-                  } rounded-md border border-input bg-background`}
+                  } rounded-md border border-input bg-background hover:border-primary focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors`}
                 />
               </div>
             </div>
@@ -194,7 +221,7 @@ const BuyoutCalculator: React.FC = () => {
                   isMobile ? 'px-3 py-1.5 text-sm' : 'px-4 py-2'
                 } rounded-md transition-colors ${
                   contractEndType === 'preset' && contractLength === period.value
-                    ? 'bg-primary text-white'
+                    ? 'bg-primary text-white shadow-lg'
                     : 'bg-card hover:bg-primary/10'
                 }`}
               >
@@ -213,7 +240,7 @@ const BuyoutCalculator: React.FC = () => {
               }}
               className={`flex-1 ${
                 isMobile ? 'p-2 text-sm' : 'p-3'
-              } rounded-md border border-input bg-background`}
+              } rounded-md border border-input bg-background hover:border-primary focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors`}
               min={new Date().toISOString().split('T')[0]}
             />
           </div>
@@ -222,33 +249,67 @@ const BuyoutCalculator: React.FC = () => {
 
       <div className={`space-y-4 ${
         isMobile ? 'p-4' : 'p-6'
-      } bg-card/50 rounded-lg`}>
-        <div className={`grid ${isMobile ? 'grid-cols-1 gap-3' : 'grid-cols-2 gap-4'}`}>
-          <div>
-            <p className="text-gray-400">Months Remaining</p>
-            <p className={`${
-              isMobile ? 'text-lg' : 'text-xl'
-            } font-semibold`}>{calculateMonthsRemaining()}</p>
-          </div>
-          <div>
-            <p className="text-gray-400">Total Cost (ex. VAT)</p>
-            <p className={`${
-              isMobile ? 'text-lg' : 'text-xl'
-            } font-semibold`}>£{totalCost.toFixed(2)}</p>
-          </div>
+      } bg-card/50 rounded-lg border border-border/50`}>
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold">Buyout Summary</h3>
+          <button
+            onClick={() => setShowBreakdown(!showBreakdown)}
+            className="p-2 hover:bg-primary/10 rounded-full transition-colors"
+          >
+            <Info className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-primary`} />
+          </button>
         </div>
 
-        <div className={`${
-          isMobile ? 'p-3' : 'p-4'
-        } rounded-md ${
+        {showBreakdown && (
+          <div className="space-y-3 p-4 bg-background/50 rounded-md border border-border/50">
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <span className="text-gray-400">Monthly Bill</span>
+              <span className="text-right font-medium">£{breakdown.monthlyBill.toFixed(2)}</span>
+              
+              <span className="text-gray-400">Months Remaining</span>
+              <span className="text-right font-medium">{breakdown.monthsRemaining}</span>
+              
+              <span className="text-gray-400">Total (inc. VAT)</span>
+              <span className="text-right font-medium">£{breakdown.totalWithVAT.toFixed(2)}</span>
+              
+              <span className="text-gray-400">VAT Amount (20%)</span>
+              <span className="text-right font-medium">£{breakdown.vatAmount.toFixed(2)}</span>
+              
+              <span className="text-gray-400">Total (ex. VAT)</span>
+              <span className="text-right font-medium">£{breakdown.totalExVAT.toFixed(2)}</span>
+              
+              <span className="text-gray-400">Our Contribution</span>
+              <span className="text-right font-medium text-green-500">-£{breakdown.contribution.toFixed(2)}</span>
+            </div>
+            
+            <div className="h-px bg-border/50 my-2" />
+            
+            <div className="grid grid-cols-2 gap-2">
+              <span className="font-medium">Customer Payment</span>
+              <span className={`text-right font-bold ${canBuyoutInFull ? 'text-green-500' : 'text-yellow-500'}`}>
+                {canBuyoutInFull ? '£0.00' : `£${breakdown.customerPayment.toFixed(2)}`}
+              </span>
+            </div>
+          </div>
+        )}
+
+        <div className={`p-4 rounded-md ${
           canBuyoutInFull 
             ? 'bg-green-500/10 border border-green-500/20' 
             : 'bg-yellow-500/10 border border-yellow-500/20'
         }`}>
           {canBuyoutInFull ? (
-            <p className="text-green-500 font-medium">
-              ✓ Full buyout available - We'll cover the entire cost
-            </p>
+            <div className="space-y-1">
+              <p className="text-green-500 font-medium flex items-center gap-2">
+                <span className="flex-shrink-0 w-4 h-4 rounded-full bg-green-500 flex items-center justify-center">
+                  <span className="text-white text-xs">✓</span>
+                </span>
+                Full buyout available
+              </p>
+              <p className="text-sm text-green-500/80">
+                We'll cover the entire cost of £{breakdown.totalExVAT.toFixed(2)}
+              </p>
+            </div>
           ) : (
             <div className="space-y-1">
               <p className="text-yellow-500 font-medium">
@@ -257,7 +318,7 @@ const BuyoutCalculator: React.FC = () => {
               <p className={`${
                 isMobile ? 'text-sm' : 'text-base'
               } text-yellow-500/80`}>
-                Customer needs to pay: £{amountToPay.toFixed(2)}
+                Customer needs to pay: £{breakdown.customerPayment.toFixed(2)}
               </p>
             </div>
           )}
