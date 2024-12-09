@@ -29,7 +29,6 @@ const BuyoutCalculator: React.FC = () => {
   const [contractEndType, setContractEndType] = useState<'preset' | 'custom'>('preset');
   const [contractLength, setContractLength] = useState('6');
   const [customDate, setCustomDate] = useState('');
-  const [showBreakdown, setShowBreakdown] = useState(false);
 
   const BUYOUT_CONTRIBUTION = 300; // £300 contribution
   const VAT_RATE = 0.20; // 20% VAT
@@ -280,54 +279,73 @@ const BuyoutCalculator: React.FC = () => {
           animate={{ opacity: 1 }}
         >
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium">Summary</h3>
-            <button
-              onClick={() => setShowBreakdown(!showBreakdown)}
-              className="text-sm text-primary hover:underline"
-            >
-              {showBreakdown ? 'Hide Details' : 'Show Details'}
-            </button>
+            <h3 className="text-lg font-medium">Breakdown</h3>
           </div>
 
-          <AnimatePresence>
-            {showBreakdown && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="space-y-3 overflow-hidden"
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            className="space-y-3 overflow-hidden"
+          >
+            <div className="grid gap-2">
+              <motion.div 
+                className="flex justify-between items-center p-3 rounded-lg bg-black/5"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
               >
-                <div className="grid gap-2">
-                  <div className="flex justify-between items-center p-3 rounded-lg bg-black/5">
-                    <span className="text-gray-500">Monthly Bill</span>
-                    <span className="font-medium">£{breakdown.monthlyBill.toFixed(2)}</span>
-                  </div>
-                  
-                  <div className="flex justify-between items-center p-3 rounded-lg bg-black/5">
-                    <span className="text-gray-500">Months Remaining</span>
-                    <span className="font-medium">{breakdown.monthsRemaining}</span>
-                  </div>
-                  
-                  <div className="flex justify-between items-center p-3 rounded-lg bg-black/5">
-                    <span className="text-gray-500">Total (inc. VAT)</span>
-                    <span className="font-medium">£{breakdown.totalWithVAT.toFixed(2)}</span>
-                  </div>
-                  
-                  <div className="flex justify-between items-center p-3 rounded-lg bg-black/5">
-                    <span className="text-gray-500">VAT Amount</span>
-                    <span className="font-medium">£{breakdown.vatAmount.toFixed(2)}</span>
-                  </div>
-                  
-                  <div className="flex justify-between items-center p-3 rounded-lg bg-black/5">
-                    <span className="text-gray-500">Our Contribution</span>
-                    <span className="font-medium text-green-500">-£{breakdown.contribution.toFixed(2)}</span>
-                  </div>
-                </div>
+                <span className="text-gray-500">Monthly Bill</span>
+                <span className="font-medium">£{breakdown.monthlyBill.toFixed(2)}</span>
               </motion.div>
-            )}
-          </AnimatePresence>
+              
+              <motion.div 
+                className="flex justify-between items-center p-3 rounded-lg bg-black/5"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <span className="text-gray-500">Months Remaining</span>
+                <span className="font-medium">{breakdown.monthsRemaining}</span>
+              </motion.div>
+              
+              <motion.div 
+                className="flex justify-between items-center p-3 rounded-lg bg-black/5"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <span className="text-gray-500">Total (inc. VAT)</span>
+                <span className="font-medium">£{breakdown.totalWithVAT.toFixed(2)}</span>
+              </motion.div>
+              
+              <motion.div 
+                className="flex justify-between items-center p-3 rounded-lg bg-black/5"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <span className="text-gray-500">VAT Amount</span>
+                <span className="font-medium">£{breakdown.vatAmount.toFixed(2)}</span>
+              </motion.div>
+              
+              <motion.div 
+                className="flex justify-between items-center p-3 rounded-lg bg-black/5"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5 }}
+              >
+                <span className="text-gray-500">Our Contribution</span>
+                <span className="font-medium text-green-500">-£{breakdown.contribution.toFixed(2)}</span>
+              </motion.div>
+            </div>
+          </motion.div>
 
-          <div className="pt-4">
+          <motion.div 
+            className="pt-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+          >
             <div className="flex items-center justify-between">
               <span className="font-medium">Final Payment</span>
               <span className={`text-2xl font-bold ${canBuyoutInFull ? 'text-green-500' : 'text-yellow-500'}`}>
@@ -339,7 +357,7 @@ const BuyoutCalculator: React.FC = () => {
                 ? 'Great news! We\'ll cover your entire buyout cost.'
                 : 'Additional payment needed to complete your buyout.'}
             </p>
-          </div>
+          </motion.div>
         </motion.div>
       </div>
     </div>
