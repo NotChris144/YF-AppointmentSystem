@@ -30,7 +30,7 @@ const initialState = {
   selectedPackage: null,
   selectedAddons: [],
   painPoints: [],
-  appointments: [],
+  appointments: [] as Appointment[],
   scheduledDate: new Date()
 };
 
@@ -86,7 +86,8 @@ export const useAppointmentStore = create<AppointmentState>()(
           selectedPackage: state.selectedPackage,
           selectedAddons: state.selectedAddons,
           painPoints: state.painPoints,
-          scheduledDate: state.scheduledDate
+          scheduledDate: state.scheduledDate,
+          appointments: state.appointments || []
         });
 
         try {
@@ -114,8 +115,8 @@ export const useAppointmentStore = create<AppointmentState>()(
               description: '',
               features: []
             },
-            selectedAddons: state.selectedAddons,
-            painPoints: state.painPoints,
+            selectedAddons: state.selectedAddons || [],
+            painPoints: state.painPoints || [],
             temperature: result.temperature,
             score: result.totalScore,
             maxScore: result.maxScore,
@@ -127,8 +128,11 @@ export const useAppointmentStore = create<AppointmentState>()(
 
           set((state) => {
             try {
+              const currentAppointments = state.appointments || [];
+              console.log('Current appointments:', currentAppointments);
+
               // Ensure all dates are proper Date objects
-              const sortedAppointments = [...state.appointments, appointment]
+              const sortedAppointments = [...currentAppointments, appointment]
                 .map(apt => {
                   try {
                     return {
@@ -153,7 +157,7 @@ export const useAppointmentStore = create<AppointmentState>()(
               return { appointments: sortedAppointments };
             } catch (err) {
               console.error('Error updating appointments:', err);
-              return state;
+              return { ...state, appointments: [appointment] };
             }
           });
 
@@ -167,7 +171,7 @@ export const useAppointmentStore = create<AppointmentState>()(
       updateAppointmentStatus: (id, status) => {
         console.log('Updating appointment status:', { id, status });
         set((state) => ({
-          appointments: state.appointments.map((apt) =>
+          appointments: (state.appointments || []).map((apt) =>
             apt.id === id
               ? { ...apt, status, updatedAt: new Date() }
               : apt
@@ -177,12 +181,16 @@ export const useAppointmentStore = create<AppointmentState>()(
       reset: () => {
         console.log('Resetting store to initial state');
         try {
-          const newState = { ...initialState, scheduledDate: new Date() };
+          const newState = { 
+            ...initialState, 
+            scheduledDate: new Date(),
+            appointments: get().appointments || [] // Keep existing appointments
+          };
           console.log('New state after reset:', newState);
           set(newState);
         } catch (err) {
           console.error('Error resetting store:', err);
-          set(initialState);
+          set({ ...initialState, appointments: [] });
         }
       },
     }),
@@ -195,7 +203,7 @@ export const useAppointmentStore = create<AppointmentState>()(
           const serializedState = {
             ...state,
             scheduledDate: state.scheduledDate ? state.scheduledDate.toISOString() : new Date().toISOString(),
-            appointments: state.appointments.map(apt => {
+            appointments: (state.appointments || []).map(apt => {
               try {
                 return {
                   ...apt,
@@ -218,7 +226,7 @@ export const useAppointmentStore = create<AppointmentState>()(
           return JSON.stringify(serializedState);
         } catch (err) {
           console.error('Error in serialize:', err);
-          return JSON.stringify(initialState);
+          return JSON.stringify({ ...initialState, appointments: [] });
         }
       },
       deserialize: (str) => {
@@ -254,7 +262,7 @@ export const useAppointmentStore = create<AppointmentState>()(
           return deserialized;
         } catch (err) {
           console.error('Error in deserialize:', err);
-          return initialState;
+          return { ...initialState, appointments: [] };
         }
       }
     }
