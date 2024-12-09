@@ -23,20 +23,26 @@ const LeadForm: React.FC = () => {
     toggleAddon, 
     togglePainPoint,
     setScheduledDate,
-    submitAppointment
+    submitAppointment,
+    customerInfo,
+    providerDetails
   } = useAppointmentStore();
   const [step, setStep] = useState(1);
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   React.useEffect(() => {
     reset();
   }, [reset]);
 
   const handleNext = () => {
+    setError(null);
     setStep(step + 1);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleBack = () => {
+    setError(null);
     if (step === 1) {
       navigate('/');
     } else {
@@ -45,9 +51,27 @@ const LeadForm: React.FC = () => {
     }
   };
 
-  const handleSubmit = () => {
-    submitAppointment('lead');
-    navigate('/');
+  const handleSubmit = async () => {
+    try {
+      setError(null);
+      setIsSubmitting(true);
+      console.log('Submitting lead appointment...', { 
+        customerInfo, 
+        providerDetails, 
+        selectedPackage,
+        selectedAddons,
+        painPoints, 
+        scheduledDate 
+      });
+      submitAppointment('lead');
+      console.log('Lead appointment submitted successfully');
+      navigate('/');
+    } catch (error) {
+      console.error('Error submitting lead appointment:', error);
+      setError(error instanceof Error ? error.message : 'Failed to submit appointment');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const renderStepContent = () => {
@@ -138,20 +162,34 @@ const LeadForm: React.FC = () => {
 
         <div className="bg-card rounded-lg p-6 shadow-lg border border-border">
           {renderStepContent()}
+          {error && (
+            <div className="mt-4 p-3 bg-error/10 border border-error/20 rounded-md text-error text-sm">
+              {error}
+            </div>
+          )}
         </div>
 
         <div className="flex justify-between items-center">
           <button
             onClick={handleBack}
             className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+            disabled={isSubmitting}
           >
             {step === 1 ? 'Cancel' : 'Back'}
           </button>
           <button
             onClick={isLastStep ? handleSubmit : handleNext}
-            className="px-6 py-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors"
+            className={`px-6 py-2 bg-primary text-white rounded-md transition-colors ${
+              isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary-hover'
+            }`}
+            disabled={isSubmitting}
           >
-            {isLastStep ? 'Submit' : 'Continue'}
+            {isSubmitting 
+              ? 'Submitting...' 
+              : isLastStep 
+                ? 'Submit' 
+                : 'Continue'
+            }
           </button>
         </div>
       </div>

@@ -20,17 +20,21 @@ const RevisitForm: React.FC = () => {
     providerDetails
   } = useAppointmentStore();
   const [step, setStep] = useState(1);
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   React.useEffect(() => {
     reset();
   }, [reset]);
 
   const handleNext = () => {
+    setError(null);
     setStep(2);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleBack = () => {
+    setError(null);
     if (step === 1) {
       navigate('/');
     } else {
@@ -39,12 +43,19 @@ const RevisitForm: React.FC = () => {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     try {
+      setError(null);
+      setIsSubmitting(true);
+      console.log('Submitting appointment...', { customerInfo, providerDetails, painPoints, scheduledDate });
       submitAppointment('revisit');
+      console.log('Appointment submitted successfully');
       navigate('/');
     } catch (error) {
       console.error('Error submitting appointment:', error);
+      setError(error instanceof Error ? error.message : 'Failed to submit appointment');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -118,20 +129,34 @@ const RevisitForm: React.FC = () => {
 
         <div className="bg-card rounded-lg p-6 shadow-lg border border-border">
           {renderStepContent()}
+          {error && (
+            <div className="mt-4 p-3 bg-error/10 border border-error/20 rounded-md text-error text-sm">
+              {error}
+            </div>
+          )}
         </div>
 
         <div className="flex justify-between items-center">
           <button
             onClick={handleBack}
             className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+            disabled={isSubmitting}
           >
             {step === 1 ? 'Cancel' : 'Back'}
           </button>
           <button
             onClick={step === 2 ? handleSubmit : handleNext}
-            className="px-6 py-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors"
+            className={`px-6 py-2 bg-primary text-white rounded-md transition-colors ${
+              isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary-hover'
+            }`}
+            disabled={isSubmitting}
           >
-            {step === 2 ? 'Submit' : 'Continue'}
+            {isSubmitting 
+              ? 'Submitting...' 
+              : step === 2 
+                ? 'Submit' 
+                : 'Continue'
+            }
           </button>
         </div>
       </div>
