@@ -2,10 +2,9 @@ import React from 'react';
 import Input from './ui/Input';
 import Toggle from './ui/Toggle';
 import { useAppointmentStore } from '../store/appointmentStore';
-import { Button } from './ui/Button';
 
 const CustomerInfoForm: React.FC = () => {
-  const { customerInfo, setCustomerInfo, setCurrentStep } = useAppointmentStore();
+  const { customerInfo, setCustomerInfo } = useAppointmentStore();
   const [errors, setErrors] = React.useState<Record<string, string>>({});
 
   const validateEmail = (email: string) => {
@@ -52,13 +51,8 @@ const CustomerInfoForm: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setCurrentStep('revisit');
-  };
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="space-y-6">
       <h2 className="text-xl font-semibold mb-6">Customer Information</h2>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -117,11 +111,7 @@ const CustomerInfoForm: React.FC = () => {
           placeholder="10 Downing Street"
         />
       </div>
-
-      <Button type="submit" className="w-full">
-        Next
-      </Button>
-    </form>
+    </div>
   );
 };
 
