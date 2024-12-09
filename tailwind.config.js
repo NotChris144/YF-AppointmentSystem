@@ -1,38 +1,50 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
   theme: {
     extend: {
       colors: {
-        background: '#030711',
-        foreground: '#FAFAFA',
+        background: 'hsl(var(--background))',
+        foreground: 'hsl(var(--foreground))',
         primary: {
-          DEFAULT: '#3B82F6',
-          foreground: '#FFFFFF',
-          hover: '#2563EB',
+          DEFAULT: 'hsl(var(--primary))',
+          foreground: 'hsl(var(--primary-foreground))',
+          hover: 'hsl(var(--primary-hover))',
         },
         card: {
-          DEFAULT: '#0F172A',
-          foreground: '#FAFAFA',
-          hover: '#1E293B',
+          DEFAULT: 'hsl(var(--card))',
+          foreground: 'hsl(var(--card-foreground))',
+          hover: 'hsl(var(--card-hover))',
         },
-        border: '#1E293B',
-        input: '#1E293B',
-        ring: '#3B82F6',
-        muted: '#64748B',
-        success: '#22C55E',
-        warning: '#F59E0B',
-        error: '#EF4444',
+        border: 'hsl(var(--border))',
+        muted: 'hsl(var(--muted))',
+        warning: 'hsl(var(--warning))',
+        success: 'hsl(var(--success))',
       },
-      borderRadius: {
-        lg: '0.75rem',
-        md: '0.5rem',
-        sm: '0.375rem',
+      spacing: {
+        'safe-top': 'var(--sat)',
+        'safe-bottom': 'var(--sab)',
+        'safe-left': 'var(--sal)',
+        'safe-right': 'var(--sar)',
       },
-      boxShadow: {
-        card: '0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3)',
+      screens: {
+        'xs': '375px',
+        'sm': '640px',
+        'md': '768px',
+        'lg': '1024px',
+        'xl': '1280px',
+        '2xl': '1536px',
+      },
+      minHeight: {
+        'touch': '44px',
+      },
+      minWidth: {
+        'touch': '44px',
       },
     },
   },
   plugins: [],
-};
+}
