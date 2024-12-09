@@ -51,7 +51,7 @@ export const useAppointmentStore = create<AppointmentState>()(
             ? state.painPoints.filter((p) => p !== id)
             : [...state.painPoints, id],
         })),
-      setScheduledDate: (date) => set({ scheduledDate: date }),
+      setScheduledDate: (date) => set({ scheduledDate: new Date(date) }),
       submitAppointment: (type) => {
         const state = get();
         const result = calculateTemperature(
@@ -65,7 +65,7 @@ export const useAppointmentStore = create<AppointmentState>()(
           id: uuidv4(),
           type,
           status: 'scheduled',
-          scheduledFor: state.scheduledDate,
+          scheduledFor: new Date(state.scheduledDate),
           customerInfo: state.customerInfo as CustomerInfo,
           providerDetails: state.providerDetails as ProviderDetails,
           selectedPackage: state.selectedPackage || {
@@ -85,11 +85,19 @@ export const useAppointmentStore = create<AppointmentState>()(
           updatedAt: new Date(),
         };
 
-        set((state) => ({
-          appointments: [...state.appointments, appointment].sort((a, b) => 
-            b.scheduledFor.getTime() - a.scheduledFor.getTime()
-          ),
-        }));
+        set((state) => {
+          // Ensure all dates are proper Date objects
+          const sortedAppointments = [...state.appointments, appointment]
+            .map(apt => ({
+              ...apt,
+              scheduledFor: new Date(apt.scheduledFor),
+              createdAt: new Date(apt.createdAt),
+              updatedAt: new Date(apt.updatedAt)
+            }))
+            .sort((a, b) => b.scheduledFor.getTime() - a.scheduledFor.getTime());
+
+          return { appointments: sortedAppointments };
+        });
 
         get().reset();
       },
@@ -113,6 +121,34 @@ export const useAppointmentStore = create<AppointmentState>()(
     }),
     {
       name: 'appointment-storage',
+      serialize: (state) => {
+        // Convert dates to ISO strings before storing
+        const serializedState = {
+          ...state,
+          scheduledDate: state.scheduledDate.toISOString(),
+          appointments: state.appointments.map(apt => ({
+            ...apt,
+            scheduledFor: apt.scheduledFor.toISOString(),
+            createdAt: apt.createdAt.toISOString(),
+            updatedAt: apt.updatedAt.toISOString()
+          }))
+        };
+        return JSON.stringify(serializedState);
+      },
+      deserialize: (str) => {
+        const parsed = JSON.parse(str);
+        // Convert ISO strings back to Date objects
+        return {
+          ...parsed,
+          scheduledDate: new Date(parsed.scheduledDate),
+          appointments: parsed.appointments.map(apt => ({
+            ...apt,
+            scheduledFor: new Date(apt.scheduledFor),
+            createdAt: new Date(apt.createdAt),
+            updatedAt: new Date(apt.updatedAt)
+          }))
+        };
+      }
     }
   )
 );
