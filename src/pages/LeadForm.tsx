@@ -32,16 +32,19 @@ const LeadForm: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   React.useEffect(() => {
+    console.log('LeadForm mounted');
     reset();
   }, [reset]);
 
   const handleNext = () => {
+    console.log('Moving to next step:', step + 1);
     setError(null);
     setStep(step + 1);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleBack = () => {
+    console.log('Moving back, current step:', step);
     setError(null);
     if (step === 1) {
       navigate('/');
@@ -77,6 +80,7 @@ const LeadForm: React.FC = () => {
   };
 
   const renderStepContent = () => {
+    console.log('Rendering step:', step);
     switch (step) {
       case 1:
         return <CustomerInfoForm />;
@@ -91,14 +95,11 @@ const LeadForm: React.FC = () => {
               onSelect={setSelectedPackage}
             />
             {selectedPackage && (
-              <div className="animate-in fade-in slide-in-from-bottom duration-300">
-                <AddonSelection
-                  addons={addons}
-                  selectedPackage={selectedPackage}
-                  selectedAddons={selectedAddons}
-                  onToggle={toggleAddon}
-                />
-              </div>
+              <AddonSelection
+                addons={addons}
+                selectedAddons={selectedAddons}
+                onToggle={toggleAddon}
+              />
             )}
             <PainPoints
               selectedPoints={painPoints}
@@ -112,16 +113,18 @@ const LeadForm: React.FC = () => {
           </div>
         );
       default:
+        console.warn('Invalid step:', step);
         return null;
     }
   };
 
-  const isLastStep = step === 3;
   const stepTitles = [
     'Customer Information',
     'Current Provider Details',
     'Package Selection'
   ];
+
+  console.log('Current form state:', { step, error, isSubmitting });
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -180,7 +183,7 @@ const LeadForm: React.FC = () => {
             {step === 1 ? 'Cancel' : 'Back'}
           </button>
           <button
-            onClick={isLastStep ? handleSubmit : handleNext}
+            onClick={step === 3 ? handleSubmit : handleNext}
             className={`px-6 py-2 bg-primary text-white rounded-md transition-colors ${
               isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary-hover'
             }`}
@@ -188,7 +191,7 @@ const LeadForm: React.FC = () => {
           >
             {isSubmitting 
               ? 'Submitting...' 
-              : isLastStep 
+              : step === 3 
                 ? 'Submit' 
                 : 'Continue'
             }

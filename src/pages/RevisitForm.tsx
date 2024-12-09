@@ -24,16 +24,19 @@ const RevisitForm: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   React.useEffect(() => {
+    console.log('RevisitForm mounted');
     reset();
   }, [reset]);
 
   const handleNext = () => {
+    console.log('Moving to next step:', step + 1);
     setError(null);
     setStep(2);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleBack = () => {
+    console.log('Moving back, current step:', step);
     setError(null);
     if (step === 1) {
       navigate('/');
@@ -62,6 +65,7 @@ const RevisitForm: React.FC = () => {
   };
 
   const renderStepContent = () => {
+    console.log('Rendering step:', step);
     switch (step) {
       case 1:
         return <CustomerInfoForm />;
@@ -81,6 +85,7 @@ const RevisitForm: React.FC = () => {
           </div>
         );
       default:
+        console.warn('Invalid step:', step);
         return null;
     }
   };
@@ -89,6 +94,8 @@ const RevisitForm: React.FC = () => {
     'Customer Information',
     'Current Provider Details'
   ];
+
+  console.log('Current form state:', { step, error, isSubmitting });
 
   return (
     <div className="max-w-3xl mx-auto">
