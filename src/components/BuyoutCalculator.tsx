@@ -159,19 +159,19 @@ const BuyoutCalculator: React.FC = () => {
                 {estimatedSpeed} <span className="text-base font-normal text-gray-500">Mbps</span>
               </motion.span>
             </div>
-            <div className="relative h-3 rounded-full bg-primary/5 overflow-hidden shadow-lg">
+            <div className="relative h-3 rounded-full overflow-hidden shadow-lg">
               <div 
-                className="absolute inset-0 bg-gradient-to-r from-blue-500 via-yellow-500 to-red-500 opacity-50"
+                className="absolute inset-0 bg-gradient-to-r from-blue-500 via-yellow-500 to-red-500 opacity-30"
               />
               <motion.div
                 initial={{ width: 0 }}
-                animate={{ width: `${(estimatedSpeed / 1000) * 100}%` }}
+                animate={{ width: `${(estimatedSpeed / 8000) * 100}%` }}
                 className="absolute inset-0 bg-gradient-to-r from-blue-500 via-yellow-500 to-red-500 shadow-[0_0_15px_rgba(59,130,246,0.5)]"
                 style={{
                   boxShadow: `0 0 20px ${
-                    estimatedSpeed < 333 
+                    estimatedSpeed < 2666 
                       ? 'rgba(59,130,246,0.5)' // blue glow
-                      : estimatedSpeed < 666 
+                      : estimatedSpeed < 5333 
                         ? 'rgba(234,179,8,0.5)' // yellow glow
                         : 'rgba(239,68,68,0.5)' // red glow
                   }`
@@ -181,15 +181,15 @@ const BuyoutCalculator: React.FC = () => {
               <input
                 type="range"
                 min="0"
-                max="1000"
+                max="8000"
                 value={estimatedSpeed}
                 onChange={(e) => setEstimatedSpeed(parseInt(e.target.value))}
                 className="absolute inset-0 opacity-0 cursor-pointer"
               />
             </div>
             <div className="flex justify-between text-xs text-gray-500 mt-1">
-              <span>Slow</span>
-              <span>Fast</span>
+              <span>0 Mbps</span>
+              <span>8000 Mbps</span>
             </div>
 
             <motion.button
