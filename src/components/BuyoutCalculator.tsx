@@ -336,7 +336,7 @@ const BuyoutCalculator: React.FC = () => {
             </div>
             <p className={`mt-2 text-sm ${canBuyoutInFull ? 'text-green-600/80' : 'text-yellow-600/80'}`}>
               {canBuyoutInFull 
-                ? 'Great news! We'll cover your entire buyout cost.'
+                ? 'Great news! We\'ll cover your entire buyout cost.'
                 : 'Additional payment needed to complete your buyout.'}
             </p>
           </div>
