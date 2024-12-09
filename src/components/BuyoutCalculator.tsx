@@ -103,9 +103,9 @@ const BuyoutCalculator: React.FC = () => {
       const centerY = rect.bottom;
       
       const angle = Math.atan2(
-        event.clientX - centerX,
-        event.clientY - centerY
-      ) * (180 / Math.PI);
+        -(event.clientX - centerX),
+        -(event.clientY - centerY)
+      ) * (180 / Math.PI) + 180;
 
       // Clamp angle between 0 and 180
       const clampedAngle = Math.max(0, Math.min(180, angle));
@@ -143,95 +143,93 @@ const BuyoutCalculator: React.FC = () => {
     const angle = calculateAngleFromSpeed(value);
 
     return (
-      <div className="relative w-full aspect-[2/1]">
+      <div className="relative w-full max-w-[500px] mx-auto">
         {/* Type Indicator */}
-        <div className="absolute -top-6 left-1/2 -translate-x-1/2 flex items-center gap-2 text-gray-400">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 flex items-center gap-2 text-gray-400">
           {type === 'download' ? <ArrowDownIcon className="w-5 h-5" /> : <ArrowUpIcon className="w-5 h-5" />}
           <span className="text-sm font-medium">{type === 'download' ? 'Download' : 'Upload'}</span>
         </div>
 
-        <div className="relative w-full h-full flex items-end justify-center">
-          {/* Background Track */}
-          <div 
-            ref={speedoRef}
-            className="absolute bottom-0 w-full h-[200%] cursor-pointer"
-            style={{
-              clipPath: 'path("M 0 100% A 100 100 0 0 1 100% 100%")',
-            }}
-            onMouseDown={handleMouseDown}
-          >
-            <div className="w-full h-full border-[16px] border-gray-800/30 rounded-full" />
-          </div>
-
-          {/* Progress Track */}
-          <div 
-            className="absolute bottom-0 w-full h-[200%] pointer-events-none"
-            style={{
-              clipPath: 'path("M 0 100% A 100 100 0 0 1 100% 100%")',
-              transform: `rotate(${angle}deg)`,
-              transformOrigin: 'bottom center',
-              transition: isDragging ? 'none' : 'transform 0.3s ease-out'
-            }}
-          >
+        <div className="relative w-full pt-[50%]"> {/* Creates a 2:1 aspect ratio container */}
+          <div className="absolute inset-0">
+            {/* Background Track */}
             <div 
-              className="w-full h-full border-[16px] rounded-full"
+              ref={speedoRef}
+              className="absolute inset-0 cursor-pointer overflow-hidden"
               style={{
-                borderImage: `linear-gradient(to right, ${
-                  type === 'download' 
-                    ? '#2dd4bf, #06b6d4'  // teal to cyan for download
-                    : '#06b6d4, #2dd4bf'  // cyan to teal for upload
-                }) 1`
+                clipPath: 'polygon(0 100%, 50% 0, 100% 100%)',
               }}
-            />
-          </div>
+              onMouseDown={handleMouseDown}
+            >
+              <div className="absolute inset-0 border-[16px] border-gray-800/30 rounded-[50%]" />
+            </div>
 
-          {/* Speed Value */}
-          <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 text-center">
-            {isEditing ? (
-              <input
-                type="number"
-                value={value}
-                onChange={(e) => onChange(Math.min(maxValue, Math.max(0, Number(e.target.value))))}
-                onBlur={() => setIsEditing(false)}
-                className="w-24 text-4xl font-bold text-cyan-400 bg-transparent border-none text-center focus:ring-0"
-                autoFocus
-              />
-            ) : (
+            {/* Progress Track */}
+            <div 
+              className="absolute inset-0 pointer-events-none overflow-hidden"
+              style={{
+                clipPath: 'polygon(0 100%, 50% 0, 100% 100%)',
+              }}
+            >
               <div 
-                className="text-4xl font-bold text-cyan-400 cursor-pointer"
-                onClick={() => setIsEditing(true)}
-              >
-                {value.toFixed(0)}
-                <span className="text-sm font-normal text-gray-400 ml-1">Mbps</span>
-              </div>
-            )}
-          </div>
+                className="absolute inset-0 border-[16px] rounded-[50%]"
+                style={{
+                  borderColor: type === 'download' ? '#2dd4bf' : '#06b6d4',
+                  transform: `rotate(${angle}deg)`,
+                  transformOrigin: 'center bottom',
+                  transition: isDragging ? 'none' : 'transform 0.3s ease-out'
+                }}
+              />
+            </div>
 
-          {/* Speed Markers */}
-          <div className="absolute bottom-0 w-full h-[200%] pointer-events-none">
-            {[0, 200, 400, 600, 800, 1000].map((speed) => {
-              const markerAngle = calculateAngleFromSpeed(speed);
-              return (
-                <div
-                  key={speed}
-                  className="absolute bottom-0 left-1/2 w-px h-[3px] bg-gray-700/30"
-                  style={{
-                    transform: `rotate(${markerAngle}deg)`,
-                    transformOrigin: 'bottom center'
-                  }}
+            {/* Speed Value */}
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-center">
+              {isEditing ? (
+                <input
+                  type="number"
+                  value={value}
+                  onChange={(e) => onChange(Math.min(maxValue, Math.max(0, Number(e.target.value))))}
+                  onBlur={() => setIsEditing(false)}
+                  className="w-24 text-4xl font-bold text-cyan-400 bg-transparent border-none text-center focus:ring-0"
+                  autoFocus
+                />
+              ) : (
+                <div 
+                  className="text-4xl font-bold text-cyan-400 cursor-pointer"
+                  onClick={() => setIsEditing(true)}
                 >
-                  <span 
-                    className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs text-gray-500/50"
-                    style={{ 
-                      transform: 'rotate(-90deg)',
-                      opacity: speed % 400 === 0 ? 1 : 0.5
+                  {value.toFixed(0)}
+                  <span className="text-sm font-normal text-gray-400 ml-1">Mbps</span>
+                </div>
+              )}
+            </div>
+
+            {/* Speed Markers */}
+            <div className="absolute inset-0 pointer-events-none">
+              {[0, 200, 400, 600, 800, 1000].map((speed) => {
+                const markerAngle = calculateAngleFromSpeed(speed);
+                return (
+                  <div
+                    key={speed}
+                    className="absolute left-1/2 bottom-0 -translate-x-1/2 origin-bottom"
+                    style={{
+                      transform: `rotate(${markerAngle}deg)`
                     }}
                   >
-                    {speed}
-                  </span>
-                </div>
-              );
-            })}
+                    <div className="h-3 w-px bg-gray-700/30" />
+                    <span 
+                      className="absolute top-4 left-1/2 -translate-x-1/2 text-xs text-gray-500/50"
+                      style={{ 
+                        transform: 'rotate(-90deg)',
+                        opacity: speed % 400 === 0 ? 1 : 0.5
+                      }}
+                    >
+                      {speed}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
