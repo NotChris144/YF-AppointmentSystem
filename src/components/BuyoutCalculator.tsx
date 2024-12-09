@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AlertTriangle, Wifi, Edit2, X } from 'lucide-react';
+import { AlertTriangle, Wifi, Edit2, X, ArrowDownIcon, ArrowUpIcon } from 'lucide-react';
 import useDevice from '../hooks/useDevice';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -268,14 +268,14 @@ const BuyoutCalculator: React.FC = () => {
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-gray-500">
-                <ArrowDown className="w-4 h-4" />
+                <ArrowDownIcon className="w-4 h-4" />
                 Download
               </div>
               <Speedometer value={actualSpeed.download} maxValue={1000} />
             </div>
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-gray-500">
-                <ArrowUp className="w-4 h-4" />
+                <ArrowUpIcon className="w-4 h-4" />
                 Upload
               </div>
               <Speedometer value={actualSpeed.upload} maxValue={1000} />
