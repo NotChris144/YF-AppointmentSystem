@@ -11,7 +11,6 @@ const RevisitForm: React.FC = () => {
   const navigate = useNavigate();
   const { 
     reset, 
-    customerInfo,
     painPoints,
     scheduledDate,
     togglePainPoint,
@@ -19,42 +18,13 @@ const RevisitForm: React.FC = () => {
     submitAppointment
   } = useAppointmentStore();
   const [step, setStep] = useState(1);
-  const [validationError, setValidationError] = useState('');
 
   React.useEffect(() => {
     reset();
   }, [reset]);
 
-  const validateCustomerInfo = () => {
-    if (!customerInfo.firstName) {
-      setValidationError('Please enter first name');
-      return false;
-    }
-    if (!customerInfo.lastName) {
-      setValidationError('Please enter last name');
-      return false;
-    }
-    if (!customerInfo.contactValue) {
-      setValidationError(`Please enter ${customerInfo.contactType === 'email' ? 'email' : 'phone number'}`);
-      return false;
-    }
-    if (!customerInfo.postcode) {
-      setValidationError('Please enter postcode');
-      return false;
-    }
-    if (!customerInfo.address) {
-      setValidationError('Please enter address');
-      return false;
-    }
-    setValidationError('');
-    return true;
-  };
-
   const handleNext = () => {
-    if (step === 1 && !validateCustomerInfo()) {
-      return;
-    }
-    setStep(step + 1);
+    setStep(2);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -62,7 +32,7 @@ const RevisitForm: React.FC = () => {
     if (step === 1) {
       navigate('/');
     } else {
-      setStep(step - 1);
+      setStep(1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -75,16 +45,7 @@ const RevisitForm: React.FC = () => {
   const renderStepContent = () => {
     switch (step) {
       case 1:
-        return (
-          <>
-            <CustomerInfoForm />
-            {validationError && (
-              <div className="text-error text-sm mt-4 text-center">
-                {validationError}
-              </div>
-            )}
-          </>
-        );
+        return <CustomerInfoForm />;
       case 2:
         return (
           <div className="space-y-8">

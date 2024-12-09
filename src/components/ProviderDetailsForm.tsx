@@ -66,6 +66,7 @@ const ProviderDetailsForm: React.FC = () => {
           value={providerDetails.name || ''}
           onChange={handleProviderChange}
           options={providers}
+          required={false}
         />
 
         {showCustomProvider && (
@@ -81,7 +82,7 @@ const ProviderDetailsForm: React.FC = () => {
           label="Monthly Cost"
           type="number"
           value={providerDetails.price || ''}
-          onChange={(e) => setProviderDetails({ price: parseFloat(e.target.value) })}
+          onChange={(e) => setProviderDetails({ price: parseFloat(e.target.value) || 0 })}
           placeholder="29.99"
           min="0"
           step="0.01"
@@ -94,11 +95,13 @@ const ProviderDetailsForm: React.FC = () => {
           onActualSpeedChange={handleActualSpeedChange}
           isCorrect={isSpeedCorrect}
           onIsCorrectChange={setIsSpeedCorrect}
+          required={false}
         />
 
         <ContractEndSelect
           value={providerDetails.contractEnd || null}
           onChange={(date) => setProviderDetails({ contractEnd: date })}
+          required={false}
         />
 
         <ContractBuyout
