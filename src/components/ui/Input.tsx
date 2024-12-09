@@ -21,11 +21,18 @@ const Input: React.FC<InputProps> = ({
       // Remove all non-numeric characters
       let value = e.target.value.replace(/\D/g, '');
       
-      // Format as UK phone number
+      // Format as UK phone number (max 11 digits)
+      if (value.length > 11) {
+        value = value.slice(0, 11);
+      }
+      
       if (value.length > 0) {
+        // Handle international format
         if (value.startsWith('44')) {
           value = '0' + value.slice(2);
         }
+        
+        // Format: 07700 900 000
         if (value.length > 4) {
           value = value.slice(0, 4) + ' ' + value.slice(4);
         }
@@ -53,7 +60,7 @@ const Input: React.FC<InputProps> = ({
         <input
           type={type}
           className={cn(
-            "w-full px-4 py-2 bg-background rounded-md border border-border",
+            "w-full px-3 py-2 bg-background rounded-md border border-input",
             "text-foreground placeholder:text-muted/60",
             "focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary",
             "disabled:opacity-50 disabled:cursor-not-allowed",
@@ -65,11 +72,13 @@ const Input: React.FC<InputProps> = ({
           {...props}
         />
       </div>
-      {helper && !error && (
-        <p className="text-sm text-muted">{helper}</p>
-      )}
-      {error && (
-        <p className="text-sm text-error">{error}</p>
+      {(helper || error) && (
+        <p className={cn(
+          "text-sm",
+          error ? "text-error" : "text-muted"
+        )}>
+          {error || helper}
+        </p>
       )}
     </div>
   );

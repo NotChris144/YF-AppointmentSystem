@@ -2,24 +2,26 @@ import React from 'react';
 import Input from './ui/Input';
 import Toggle from './ui/Toggle';
 import { useAppointmentStore } from '../store/appointmentStore';
+import { Button } from './ui/Button';
 
 const CustomerInfoForm: React.FC = () => {
-  const { customerInfo, setCustomerInfo } = useAppointmentStore();
+  const { customerInfo, setCustomerInfo, setCurrentStep } = useAppointmentStore();
   const [errors, setErrors] = React.useState<Record<string, string>>({});
 
   const validateEmail = (email: string) => {
+    if (!email) return true;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
   const validatePhone = (phone: string) => {
-    // UK phone number format
+    if (!phone) return true;
     const phoneRegex = /^0[0-9]{3,4}\s?[0-9]{3}\s?[0-9]{3,4}$/;
     return phoneRegex.test(phone);
   };
 
   const validatePostcode = (postcode: string) => {
-    // UK postcode format
+    if (!postcode) return true;
     const postcodeRegex = /^[A-Z]{1,2}[0-9][A-Z0-9]? ?[0-9][A-Z]{2}$/i;
     return postcodeRegex.test(postcode);
   };
@@ -40,7 +42,6 @@ const CustomerInfoForm: React.FC = () => {
   };
 
   const handlePostcodeChange = (value: string) => {
-    // Convert to uppercase
     const formattedValue = value.toUpperCase();
     setCustomerInfo({ postcode: formattedValue });
     
@@ -51,8 +52,13 @@ const CustomerInfoForm: React.FC = () => {
     }
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setCurrentStep('revisit');
+  };
+
   return (
-    <div className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <h2 className="text-xl font-semibold mb-6">Customer Information</h2>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -61,14 +67,12 @@ const CustomerInfoForm: React.FC = () => {
           value={customerInfo.firstName || ''}
           onChange={(e) => setCustomerInfo({ firstName: e.target.value })}
           placeholder="John"
-          required
         />
         <Input
           label="Last Name"
           value={customerInfo.lastName || ''}
           onChange={(e) => setCustomerInfo({ lastName: e.target.value })}
           placeholder="Doe"
-          required
         />
       </div>
 
@@ -93,7 +97,6 @@ const CustomerInfoForm: React.FC = () => {
           placeholder={customerInfo.contactType === 'email' ? 'john@example.com' : '07700 900 000'}
           error={errors.contact}
           helper={customerInfo.contactType === 'phone' ? 'Format: 07700 900 000' : undefined}
-          required
         />
       </div>
 
@@ -105,10 +108,20 @@ const CustomerInfoForm: React.FC = () => {
           placeholder="SW1A 1AA"
           error={errors.postcode}
           helper="Format: SW1A 1AA"
-          required
+        />
+
+        <Input
+          label="Address"
+          value={customerInfo.address || ''}
+          onChange={(e) => setCustomerInfo({ address: e.target.value })}
+          placeholder="10 Downing Street"
         />
       </div>
-    </div>
+
+      <Button type="submit" className="w-full">
+        Next
+      </Button>
+    </form>
   );
 };
 
