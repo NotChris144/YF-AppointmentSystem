@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface SpeedTestData {
   download: number;
   upload: number;
+  type: 'download' | 'upload';
 }
 
 interface BuyoutBreakdown {
@@ -25,7 +26,7 @@ const BuyoutCalculator: React.FC = () => {
   const [isEditingBill, setIsEditingBill] = useState(false);
   const [estimatedSpeed, setEstimatedSpeed] = useState(0);
   const [showSpeedTest, setShowSpeedTest] = useState(false);
-  const [actualSpeed, setActualSpeed] = useState<SpeedTestData>({ download: 0, upload: 0 });
+  const [actualSpeed, setActualSpeed] = useState<SpeedTestData>({ download: 0, upload: 0, type: 'download' });
   const [contractEndType, setContractEndType] = useState<'preset' | 'custom'>('preset');
   const [contractLength, setContractLength] = useState('6');
   const [customDate, setCustomDate] = useState('');
@@ -76,8 +77,73 @@ const BuyoutCalculator: React.FC = () => {
   const breakdown = calculateBreakdown();
   const canBuyoutInFull = breakdown.customerPayment === 0;
 
-  const Speedometer: React.FC<{ value: number; maxValue?: number }> = ({ value, maxValue = 100 }) => {
-    const angle = (value / maxValue) * 180; // Convert value to angle (180 degree arc)
+  const Speedometer: React.FC<{ 
+    value: number; 
+    maxValue?: number;
+    onChange: (value: number) => void;
+    type: 'download' | 'upload';
+  }> = ({ value, maxValue = 1000, onChange, type }) => {
+    const [isDragging, setIsDragging] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const speedoRef = React.useRef<HTMLDivElement>(null);
+
+    const calculateSpeedFromAngle = (angle: number) => {
+      // Convert angle (0-180) to speed (0-maxValue)
+      return (angle / 180) * maxValue;
+    };
+
+    const calculateAngleFromSpeed = (speed: number) => {
+      // Convert speed to angle (0-180)
+      return (speed / maxValue) * 180;
+    };
+
+    const calculateSpeedFromMousePosition = (event: React.MouseEvent | MouseEvent) => {
+      if (!speedoRef.current) return;
+
+      const rect = speedoRef.current.getBoundingClientRect();
+      const centerX = rect.left + (rect.width / 2);
+      const centerY = rect.bottom;
+      
+      // Calculate angle from mouse position relative to center
+      const angle = Math.atan2(
+        -(event.clientX - centerX),
+        -(event.clientY - centerY)
+      ) * (180 / Math.PI) + 180;
+
+      // Clamp angle between 0 and 180
+      const clampedAngle = Math.max(0, Math.min(180, angle));
+      const newSpeed = Math.round(calculateSpeedFromAngle(clampedAngle));
+      onChange(newSpeed);
+    };
+
+    const handleMouseDown = (event: React.MouseEvent) => {
+      setIsDragging(true);
+      calculateSpeedFromMousePosition(event);
+      event.preventDefault();
+    };
+
+    const handleMouseMove = (event: MouseEvent) => {
+      if (isDragging) {
+        calculateSpeedFromMousePosition(event);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    React.useEffect(() => {
+      if (isDragging) {
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
+      }
+      return () => {
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+      };
+    }, [isDragging]);
+
+    const angle = calculateAngleFromSpeed(value);
     const gradientStops = [
       { color: '#06b6d4', position: 0 },    // cyan-500
       { color: '#06b6d4', position: 20 },   // cyan-500
@@ -91,12 +157,16 @@ const BuyoutCalculator: React.FC = () => {
       <div className="relative w-full aspect-[4/3] flex items-center justify-center">
         {/* Background Arc */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-4/5 h-4/5 rounded-full border-[16px] border-gray-800/50" 
-               style={{ clipPath: 'polygon(0 50%, 100% 50%, 100% 100%, 0 100%)' }} />
+          <div 
+            ref={speedoRef}
+            className="w-4/5 h-4/5 rounded-full border-[16px] border-gray-800/50 cursor-pointer" 
+            style={{ clipPath: 'polygon(0 50%, 100% 50%, 100% 100%, 0 100%)' }}
+            onMouseDown={handleMouseDown}
+          />
         </div>
         
         {/* Colored Progress Arc */}
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-4/5 h-4/5 rounded-full border-[16px]"
                style={{
                  clipPath: 'polygon(0 50%, 100% 50%, 100% 100%, 0 100%)',
@@ -105,14 +175,14 @@ const BuyoutCalculator: React.FC = () => {
                    ${gradientStops.map(stop => `${stop.color} ${stop.position}%`).join(', ')}
                  ) 1`,
                  transform: `rotate(${angle}deg)`,
-                 transition: 'transform 0.5s ease-out'
+                 transition: isDragging ? 'none' : 'transform 0.3s ease-out'
                }} />
         </div>
 
         {/* Speed Markers */}
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-4/5 h-4/5 relative">
-            {[0, 20, 40, 60, 80, 100].map((marker) => {
+            {[0, 200, 400, 600, 800, 1000].map((marker) => {
               const markerAngle = (marker / maxValue) * 180;
               return (
                 <div
@@ -131,9 +201,33 @@ const BuyoutCalculator: React.FC = () => {
         </div>
 
         {/* Current Speed Display */}
-        <div className="absolute bottom-8 text-center">
-          <div className="text-4xl font-bold text-cyan-400">{value.toFixed(2)}</div>
+        <div className="absolute bottom-12 text-center">
+          {isEditing ? (
+            <input
+              type="number"
+              value={value}
+              onChange={(e) => onChange(Math.min(maxValue, Math.max(0, Number(e.target.value))))}
+              onBlur={() => setIsEditing(false)}
+              className="w-24 text-4xl font-bold text-cyan-400 bg-transparent border-none text-center focus:ring-0"
+              autoFocus
+            />
+          ) : (
+            <div 
+              className="text-4xl font-bold text-cyan-400 cursor-pointer"
+              onClick={() => setIsEditing(true)}
+            >
+              {value.toFixed(0)}
+            </div>
+          )}
           <div className="text-sm text-gray-400">Mbps</div>
+        </div>
+
+        {/* Speed Type Indicator */}
+        <div className="absolute top-4 text-center">
+          <div className="flex items-center gap-2 text-gray-400">
+            {type === 'download' ? <ArrowDownIcon className="w-5 h-5" /> : <ArrowUpIcon className="w-5 h-5" />}
+            <span className="text-sm font-medium">{type === 'download' ? 'Download' : 'Upload'}</span>
+          </div>
         </div>
       </div>
     );
@@ -254,33 +348,37 @@ const BuyoutCalculator: React.FC = () => {
         >
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-medium">Speed Test</h3>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setShowSpeedTest(!showSpeedTest)}
-              className="px-4 py-2 bg-primary/5 hover:bg-primary/10 text-primary rounded-lg flex items-center gap-2 transition-all"
-            >
-              <Wifi className="w-4 h-4" />
-              Test Now
-            </motion.button>
+            <div className="flex items-center gap-2">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setActualSpeed({ ...actualSpeed, type: actualSpeed.type === 'download' ? 'upload' : 'download' })}
+                className="px-4 py-2 bg-primary/5 hover:bg-primary/10 text-primary rounded-lg flex items-center gap-2 transition-all"
+              >
+                {actualSpeed.type === 'download' ? <ArrowDownIcon className="w-4 h-4" /> : <ArrowUpIcon className="w-4 h-4" />}
+                {actualSpeed.type === 'download' ? 'Download' : 'Upload'}
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setShowSpeedTest(!showSpeedTest)}
+                className="px-4 py-2 bg-primary/5 hover:bg-primary/10 text-primary rounded-lg flex items-center gap-2 transition-all"
+              >
+                <Wifi className="w-4 h-4" />
+                Test Now
+              </motion.button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <ArrowDownIcon className="w-4 h-4" />
-                Download
-              </div>
-              <Speedometer value={actualSpeed.download} maxValue={1000} />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <ArrowUpIcon className="w-4 h-4" />
-                Upload
-              </div>
-              <Speedometer value={actualSpeed.upload} maxValue={1000} />
-            </div>
-          </div>
+          <Speedometer 
+            value={actualSpeed.type === 'download' ? actualSpeed.download : actualSpeed.upload}
+            maxValue={1000}
+            onChange={(value) => setActualSpeed(prev => ({
+              ...prev,
+              [prev.type]: value
+            }))}
+            type={actualSpeed.type}
+          />
 
           <AnimatePresence>
             {showSpeedTest && (
@@ -295,7 +393,7 @@ const BuyoutCalculator: React.FC = () => {
                     <div className="w-2 h-2 rounded-full bg-cyan-400" />
                     Ping
                   </div>
-                  <span>{actualSpeed.download > 0 ? '9ms' : '--'}</span>
+                  <span>{actualSpeed.download > 0 || actualSpeed.upload > 0 ? '9ms' : '--'}</span>
                 </div>
               </motion.div>
             )}
