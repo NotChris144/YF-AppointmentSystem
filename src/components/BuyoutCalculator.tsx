@@ -141,6 +141,23 @@ const BuyoutCalculator: React.FC = () => {
     }, [isDragging]);
 
     const angle = calculateAngleFromSpeed(value);
+    const radius = 150; // SVG coordinate radius
+    const strokeWidth = 16;
+    const normalizedRadius = radius - strokeWidth / 2;
+  
+    // Calculate the path for the arc
+    const getArcPath = (startAngle: number, endAngle: number) => {
+      const start = {
+        x: radius + normalizedRadius * Math.cos((startAngle - 180) * Math.PI / 180),
+        y: radius + normalizedRadius * Math.sin((startAngle - 180) * Math.PI / 180)
+      };
+      const end = {
+        x: radius + normalizedRadius * Math.cos((endAngle - 180) * Math.PI / 180),
+        y: radius + normalizedRadius * Math.sin((endAngle - 180) * Math.PI / 180)
+      };
+      const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+      return `M ${start.x} ${start.y} A ${normalizedRadius} ${normalizedRadius} 0 ${largeArcFlag} 1 ${end.x} ${end.y}`;
+    };
 
     return (
       <div className="relative w-full max-w-[500px] mx-auto">
@@ -150,37 +167,68 @@ const BuyoutCalculator: React.FC = () => {
           <span className="text-sm font-medium">{type === 'download' ? 'Download' : 'Upload'}</span>
         </div>
 
-        <div className="relative w-full pt-[50%]"> {/* Creates a 2:1 aspect ratio container */}
-          <div className="absolute inset-0">
-            {/* Background Track */}
-            <div 
-              ref={speedoRef}
-              className="absolute inset-0 cursor-pointer overflow-hidden"
-              style={{
-                clipPath: 'polygon(0 100%, 50% 0, 100% 100%)',
-              }}
-              onMouseDown={handleMouseDown}
+        <div className="relative w-full pt-[50%]">
+          <div className="absolute inset-0" ref={speedoRef} onMouseDown={handleMouseDown}>
+            <svg
+              viewBox={`0 0 ${radius * 2} ${radius * 2}`}
+              className="w-full h-full"
             >
-              <div className="absolute inset-0 border-[16px] border-gray-800/30 rounded-[50%]" />
-            </div>
+              {/* Background Arc */}
+              <path
+                d={getArcPath(0, 180)}
+                fill="none"
+                stroke="rgba(31, 41, 55, 0.3)"
+                strokeWidth={strokeWidth}
+                strokeLinecap="round"
+              />
 
-            {/* Progress Track */}
-            <div 
-              className="absolute inset-0 pointer-events-none overflow-hidden"
-              style={{
-                clipPath: 'polygon(0 100%, 50% 0, 100% 100%)',
-              }}
-            >
-              <div 
-                className="absolute inset-0 border-[16px] rounded-[50%]"
+              {/* Progress Arc */}
+              <path
+                d={getArcPath(0, angle)}
+                fill="none"
+                stroke={type === 'download' ? '#2dd4bf' : '#06b6d4'}
+                strokeWidth={strokeWidth}
+                strokeLinecap="round"
                 style={{
-                  borderColor: type === 'download' ? '#2dd4bf' : '#06b6d4',
-                  transform: `rotate(${angle}deg)`,
-                  transformOrigin: 'center bottom',
-                  transition: isDragging ? 'none' : 'transform 0.3s ease-out'
+                  transition: isDragging ? 'none' : 'all 0.3s ease-out'
                 }}
               />
-            </div>
+
+              {/* Speed Markers */}
+              {[0, 200, 400, 600, 800, 1000].map((speed) => {
+                const markerAngle = calculateAngleFromSpeed(speed) - 180;
+                const markerX = radius + (radius - 30) * Math.cos(markerAngle * Math.PI / 180);
+                const markerY = radius + (radius - 30) * Math.sin(markerAngle * Math.PI / 180);
+                const textX = radius + (radius - 50) * Math.cos(markerAngle * Math.PI / 180);
+                const textY = radius + (radius - 50) * Math.sin(markerAngle * Math.PI / 180);
+
+                return (
+                  <g key={speed}>
+                    <line
+                      x1={radius + (radius - 20) * Math.cos(markerAngle * Math.PI / 180)}
+                      y1={radius + (radius - 20) * Math.sin(markerAngle * Math.PI / 180)}
+                      x2={markerX}
+                      y2={markerY}
+                      stroke="rgba(55, 65, 81, 0.3)"
+                      strokeWidth="2"
+                    />
+                    <text
+                      x={textX}
+                      y={textY}
+                      fill="rgba(156, 163, 175, 0.5)"
+                      fontSize="12"
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      style={{
+                        opacity: speed % 400 === 0 ? 1 : 0.5
+                      }}
+                    >
+                      {speed}
+                    </text>
+                  </g>
+                );
+              })}
+            </svg>
 
             {/* Speed Value */}
             <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-center">
@@ -202,33 +250,6 @@ const BuyoutCalculator: React.FC = () => {
                   <span className="text-sm font-normal text-gray-400 ml-1">Mbps</span>
                 </div>
               )}
-            </div>
-
-            {/* Speed Markers */}
-            <div className="absolute inset-0 pointer-events-none">
-              {[0, 200, 400, 600, 800, 1000].map((speed) => {
-                const markerAngle = calculateAngleFromSpeed(speed);
-                return (
-                  <div
-                    key={speed}
-                    className="absolute left-1/2 bottom-0 -translate-x-1/2 origin-bottom"
-                    style={{
-                      transform: `rotate(${markerAngle}deg)`
-                    }}
-                  >
-                    <div className="h-3 w-px bg-gray-700/30" />
-                    <span 
-                      className="absolute top-4 left-1/2 -translate-x-1/2 text-xs text-gray-500/50"
-                      style={{ 
-                        transform: 'rotate(-90deg)',
-                        opacity: speed % 400 === 0 ? 1 : 0.5
-                      }}
-                    >
-                      {speed}
-                    </span>
-                  </div>
-                );
-              })}
             </div>
           </div>
         </div>
