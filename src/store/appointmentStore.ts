@@ -1,19 +1,21 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
-import { Addon } from '../types/packages';
+import { Addon, Package } from '../types/packages';
 import { CustomerInfo, ProviderDetails, Appointment, AppointmentType } from '../types/appointment';
 import { calculateTemperature } from '../lib/saleTemperature';
 
 interface AppointmentState {
   customerInfo: Partial<CustomerInfo>;
   providerDetails: Partial<ProviderDetails>;
+  selectedPackage: Package | null;
   selectedAddons: Addon[];
   painPoints: string[];
   appointments: Appointment[];
   scheduledDate: Date;
   setCustomerInfo: (info: Partial<CustomerInfo>) => void;
   setProviderDetails: (details: Partial<ProviderDetails>) => void;
+  setSelectedPackage: (pkg: Package) => void;
   toggleAddon: (addon: Addon) => void;
   togglePainPoint: (id: string) => void;
   setScheduledDate: (date: Date) => void;
@@ -27,6 +29,7 @@ export const useAppointmentStore = create<AppointmentState>()(
     (set, get) => ({
       customerInfo: {},
       providerDetails: {},
+      selectedPackage: null,
       selectedAddons: [],
       painPoints: [],
       appointments: [],
@@ -35,6 +38,7 @@ export const useAppointmentStore = create<AppointmentState>()(
         set((state) => ({ customerInfo: { ...state.customerInfo, ...info } })),
       setProviderDetails: (details) =>
         set((state) => ({ providerDetails: { ...state.providerDetails, ...details } })),
+      setSelectedPackage: (pkg) => set({ selectedPackage: pkg }),
       toggleAddon: (addon) =>
         set((state) => ({
           selectedAddons: state.selectedAddons.some((a) => a.id === addon.id)
@@ -64,6 +68,7 @@ export const useAppointmentStore = create<AppointmentState>()(
           scheduledFor: state.scheduledDate,
           customerInfo: state.customerInfo as CustomerInfo,
           providerDetails: state.providerDetails as ProviderDetails,
+          selectedPackage: state.selectedPackage!,
           selectedAddons: state.selectedAddons,
           painPoints: state.painPoints,
           temperature: result.temperature,
@@ -89,10 +94,11 @@ export const useAppointmentStore = create<AppointmentState>()(
               : apt
           ),
         })),
-      reset: () => 
-        set({ 
-          customerInfo: {}, 
-          providerDetails: {}, 
+      reset: () =>
+        set({
+          customerInfo: {},
+          providerDetails: {},
+          selectedPackage: null,
           selectedAddons: [],
           painPoints: [],
           scheduledDate: new Date(),

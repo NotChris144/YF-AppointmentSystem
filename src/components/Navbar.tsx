@@ -1,10 +1,12 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Calendar, Search, Menu } from 'lucide-react';
+import { Home, Calendar, Search, Menu, Sun, Moon } from 'lucide-react';
+import { useThemeStore } from '../store/themeStore';
 
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const location = useLocation();
+  const { isDark, toggleTheme } = useThemeStore();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -36,6 +38,17 @@ const Navbar: React.FC = () => {
               aria-label="Search"
             >
               <Search className="w-5 h-5" />
+            </button>
+            <button
+              className="p-3 rounded-md touch-manipulation hover:bg-primary/5"
+              onClick={toggleTheme}
+              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {isDark ? (
+                <Sun className="w-5 h-5" />
+              ) : (
+                <Moon className="w-5 h-5" />
+              )}
             </button>
             <button 
               className="p-3 rounded-md touch-manipulation sm:hidden hover:bg-primary/5"

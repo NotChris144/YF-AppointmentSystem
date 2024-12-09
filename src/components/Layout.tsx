@@ -1,9 +1,16 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Navigation } from 'lucide-react';
 import Navbar from './Navbar';
+import { useThemeStore } from '../store/themeStore';
 
 const Layout: React.FC = () => {
+  const { isDark } = useThemeStore();
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  }, [isDark]);
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <Navbar />
