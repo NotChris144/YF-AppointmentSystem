@@ -76,6 +76,69 @@ const BuyoutCalculator: React.FC = () => {
   const breakdown = calculateBreakdown();
   const canBuyoutInFull = breakdown.customerPayment === 0;
 
+  const Speedometer: React.FC<{ value: number; maxValue?: number }> = ({ value, maxValue = 100 }) => {
+    const angle = (value / maxValue) * 180; // Convert value to angle (180 degree arc)
+    const gradientStops = [
+      { color: '#06b6d4', position: 0 },    // cyan-500
+      { color: '#06b6d4', position: 20 },   // cyan-500
+      { color: '#2dd4bf', position: 40 },   // teal-400
+      { color: '#34d399', position: 60 },   // emerald-400
+      { color: '#6ee7b7', position: 80 },   // emerald-300
+      { color: '#a7f3d0', position: 100 },  // emerald-200
+    ];
+
+    return (
+      <div className="relative w-full aspect-[4/3] flex items-center justify-center">
+        {/* Background Arc */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-4/5 h-4/5 rounded-full border-[16px] border-gray-800/50" 
+               style={{ clipPath: 'polygon(0 50%, 100% 50%, 100% 100%, 0 100%)' }} />
+        </div>
+        
+        {/* Colored Progress Arc */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-4/5 h-4/5 rounded-full border-[16px]"
+               style={{
+                 clipPath: 'polygon(0 50%, 100% 50%, 100% 100%, 0 100%)',
+                 borderImage: `conic-gradient(
+                   from 180deg,
+                   ${gradientStops.map(stop => `${stop.color} ${stop.position}%`).join(', ')}
+                 ) 1`,
+                 transform: `rotate(${angle}deg)`,
+                 transition: 'transform 0.5s ease-out'
+               }} />
+        </div>
+
+        {/* Speed Markers */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-4/5 h-4/5 relative">
+            {[0, 20, 40, 60, 80, 100].map((marker) => {
+              const markerAngle = (marker / maxValue) * 180;
+              return (
+                <div
+                  key={marker}
+                  className="absolute left-1/2 bottom-0 -translate-x-1/2 origin-[50%_0%] text-gray-400 text-sm"
+                  style={{ transform: `rotate(${markerAngle}deg)` }}
+                >
+                  <div className="h-4 w-px bg-gray-700 mb-1" />
+                  <span className="inline-block" style={{ transform: `rotate(-${markerAngle}deg)` }}>
+                    {marker}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Current Speed Display */}
+        <div className="absolute bottom-8 text-center">
+          <div className="text-4xl font-bold text-cyan-400">{value.toFixed(2)}</div>
+          <div className="text-sm text-gray-400">Mbps</div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6 p-4 max-w-2xl mx-auto">
       <div className="grid gap-6">
@@ -143,107 +206,6 @@ const BuyoutCalculator: React.FC = () => {
           )}
         </motion.div>
 
-        {/* Speed Test */}
-        <motion.div
-          className="rounded-xl bg-card/50 p-6 space-y-6"
-          animate={{ opacity: monthlyBill ? 1 : 0.8 }}
-        >
-          <h3 className="text-lg font-medium">Speed Check</h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <motion.span
-                initial={{ scale: 0.8 }}
-                animate={{ scale: 1 }}
-                className="text-2xl font-semibold"
-              >
-                {estimatedSpeed} <span className="text-base font-normal text-gray-500">Mbps</span>
-              </motion.span>
-            </div>
-            <div className="relative h-3 rounded-full overflow-hidden shadow-lg">
-              <div 
-                className="absolute inset-0 bg-gradient-to-r from-blue-500 via-yellow-500 to-red-500 opacity-30"
-              />
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${(estimatedSpeed / 8000) * 100}%` }}
-                className="absolute inset-0 bg-gradient-to-r from-blue-500 via-yellow-500 to-red-500 shadow-[0_0_15px_rgba(59,130,246,0.5)]"
-                style={{
-                  boxShadow: `0 0 20px ${
-                    estimatedSpeed < 2666 
-                      ? 'rgba(59,130,246,0.5)' // blue glow
-                      : estimatedSpeed < 5333 
-                        ? 'rgba(234,179,8,0.5)' // yellow glow
-                        : 'rgba(239,68,68,0.5)' // red glow
-                  }`
-                }}
-                transition={{ type: "spring", stiffness: 100 }}
-              />
-              <input
-                type="range"
-                min="0"
-                max="8000"
-                value={estimatedSpeed}
-                onChange={(e) => setEstimatedSpeed(parseInt(e.target.value))}
-                className="absolute inset-0 opacity-0 cursor-pointer"
-              />
-            </div>
-            <div className="flex justify-between text-xs text-gray-500 mt-1">
-              <span>0 Mbps</span>
-              <span>8000 Mbps</span>
-            </div>
-
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setShowSpeedTest(!showSpeedTest)}
-              className="w-full p-4 bg-primary/5 hover:bg-primary/10 text-primary rounded-lg flex items-center justify-center gap-2 transition-all"
-            >
-              <Wifi className="w-5 h-5" />
-              Speed Test
-            </motion.button>
-
-            <AnimatePresence>
-              {showSpeedTest && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="space-y-4 overflow-hidden"
-                >
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <span className="text-sm text-gray-500">Download</span>
-                      <div className="relative">
-                        <input
-                          type="number"
-                          value={actualSpeed.download}
-                          onChange={(e) => setActualSpeed({ ...actualSpeed, download: parseFloat(e.target.value) || 0 })}
-                          className="w-full p-3 bg-transparent border-none focus:ring-0 text-xl font-medium"
-                          placeholder="0"
-                        />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">Mbps</span>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <span className="text-sm text-gray-500">Upload</span>
-                      <div className="relative">
-                        <input
-                          type="number"
-                          value={actualSpeed.upload}
-                          onChange={(e) => setActualSpeed({ ...actualSpeed, upload: parseFloat(e.target.value) || 0 })}
-                          className="w-full p-3 bg-transparent border-none focus:ring-0 text-xl font-medium"
-                          placeholder="0"
-                        />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">Mbps</span>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </motion.div>
-
         {/* Contract Length */}
         <motion.div
           className="rounded-xl bg-card/50 p-6 space-y-4"
@@ -283,6 +245,61 @@ const BuyoutCalculator: React.FC = () => {
               min={new Date().toISOString().split('T')[0]}
             />
           </div>
+        </motion.div>
+
+        {/* Speed Test */}
+        <motion.div
+          className="rounded-xl bg-card/50 p-6 space-y-4"
+          animate={{ opacity: 1 }}
+        >
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-medium">Speed Test</h3>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setShowSpeedTest(!showSpeedTest)}
+              className="px-4 py-2 bg-primary/5 hover:bg-primary/10 text-primary rounded-lg flex items-center gap-2 transition-all"
+            >
+              <Wifi className="w-4 h-4" />
+              Test Now
+            </motion.button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <ArrowDown className="w-4 h-4" />
+                Download
+              </div>
+              <Speedometer value={actualSpeed.download} maxValue={1000} />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <ArrowUp className="w-4 h-4" />
+                Upload
+              </div>
+              <Speedometer value={actualSpeed.upload} maxValue={1000} />
+            </div>
+          </div>
+
+          <AnimatePresence>
+            {showSpeedTest && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="pt-4 space-y-4 overflow-hidden"
+              >
+                <div className="flex items-center justify-between text-sm text-gray-500">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-cyan-400" />
+                    Ping
+                  </div>
+                  <span>{actualSpeed.download > 0 ? '9ms' : '--'}</span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
 
         {/* Summary */}
