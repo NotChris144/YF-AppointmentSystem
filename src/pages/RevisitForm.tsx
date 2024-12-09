@@ -48,15 +48,17 @@ const RevisitForm: React.FC = () => {
       setError(null);
       setIsSubmitting(true);
       console.log('Submitting appointment...', { customerInfo, providerDetails, painPoints, scheduledDate });
+      await new Promise(resolve => setTimeout(resolve, 500)); // Add small delay for better UX
       submitAppointment('revisit');
       console.log('Appointment submitted successfully');
       navigate('/');
-    } catch (error) {
-      console.error('Error submitting appointment:', error);
-      setError(error instanceof Error ? error.message : 'Failed to submit appointment');
-    } finally {
+    } catch (err) {
+      console.error('Error submitting appointment:', err);
+      setError(err instanceof Error ? err.message : 'Failed to submit appointment');
       setIsSubmitting(false);
+      return; // Don't navigate on error
     }
+    setIsSubmitting(false);
   };
 
   const renderStepContent = () => {
