@@ -122,17 +122,31 @@
 
   /* Container */
   .container {
-    @apply px-4 sm:px-6 lg:px-8;
+    @apply w-full mx-auto;
+    max-width: min(100% - 2rem, 1280px);
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
   }
 
   /* Mobile optimizations */
   @media (max-width: 640px) {
+    .container {
+      max-width: 100%;
+      padding-left: max(1rem, env(safe-area-inset-left));
+      padding-right: max(1rem, env(safe-area-inset-right));
+    }
+
     input, select, textarea, button {
       @apply text-base;
     }
 
     .btn {
       @apply px-4 py-2.5;
+    }
+
+    /* Improve touch targets on mobile */
+    input, button, a {
+      min-height: 44px;
     }
   }
 }

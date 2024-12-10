@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AlertTriangle, Edit2 } from 'lucide-react';
 import useDevice from '../hooks/useDevice';
 import { motion, AnimatePresence } from 'framer-motion';
+import NumberInput from './ui/NumberInput';
 
 interface BuyoutBreakdown {
   monthlyBill: number;
@@ -102,37 +103,11 @@ const BuyoutCalculator: React.FC = () => {
           animate={{ opacity: provider ? 1 : 0.8 }}
         >
           <h3 className="text-lg font-medium mb-4">Monthly Bill</h3>
-          {isEditingBill ? (
-            <motion.div
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="relative"
-            >
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">£</span>
-              <input
-                type="number"
-                value={monthlyBill}
-                onChange={(e) => setMonthlyBill(e.target.value)}
-                onBlur={() => setIsEditingBill(false)}
-                autoFocus
-                className="w-full p-3 pl-8 bg-transparent border-none focus:ring-0 text-xl font-medium"
-                placeholder="0.00"
-                step="0.01"
-              />
-            </motion.div>
-          ) : (
-            <motion.div
-              className="flex items-center justify-between group cursor-pointer"
-              onClick={() => setIsEditingBill(true)}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <span className="text-xl font-medium">
-                {monthlyBill ? `£${parseFloat(monthlyBill).toFixed(2)}` : 'Click to enter'}
-              </span>
-              <Edit2 className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </motion.div>
-          )}
+          <NumberInput
+            value={monthlyBill}
+            onChange={setMonthlyBill}
+            max={1000}
+          />
         </motion.div>
 
         {/* Contract Length */}
