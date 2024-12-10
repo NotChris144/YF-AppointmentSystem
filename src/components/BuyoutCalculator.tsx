@@ -281,7 +281,7 @@ const BuyoutCalculator: React.FC = () => {
           </div>
 
           {/* Speed Value - Positioned relative to speedometer */}
-          <div className="absolute bottom-[15%] left-1/2 -translate-x-1/2 transform">
+          <div className="absolute bottom-[25%] left-1/2 -translate-x-1/2 transform">
             {isEditing ? (
               <input
                 type="number"
