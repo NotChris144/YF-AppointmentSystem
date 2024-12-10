@@ -25,12 +25,12 @@ const Speedometer: React.FC<SpeedometerProps> = ({
 
   // Calculate angle from speed value (0 to 180 for top half)
   const calculateAngleFromSpeed = (speed: number) => {
-    return 180 - (speed / maxValue) * 180;
+    return (speed / maxValue) * 180;
   };
 
   // Calculate speed from angle
   const calculateSpeedFromAngle = (angle: number) => {
-    return ((180 - angle) / 180) * maxValue;
+    return (angle / 180) * maxValue;
   };
 
   // Current angle based on value
@@ -88,6 +88,24 @@ const Speedometer: React.FC<SpeedometerProps> = ({
     document.removeEventListener('mouseup', handleMouseUp);
   };
 
+  // Handle click on arc
+  const handleArcClick = (e: React.MouseEvent<SVGSVGElement>) => {
+    if (!speedoRef.current) return;
+
+    const svgRect = speedoRef.current.getBoundingClientRect();
+    const svgCenterX = svgRect.left + svgRect.width / 2;
+    const svgCenterY = svgRect.top + svgRect.height;
+
+    const angle = Math.atan2(
+      svgCenterY - e.clientY,
+      e.clientX - svgCenterX
+    ) * 180 / Math.PI;
+
+    const clampedAngle = Math.max(0, Math.min(180, angle));
+    const newSpeed = calculateSpeedFromAngle(clampedAngle);
+    onChange(Math.round(newSpeed));
+  };
+
   return (
     <div className="relative w-full max-w-[500px] mx-auto">
       {/* Type Indicator */}
@@ -105,6 +123,7 @@ const Speedometer: React.FC<SpeedometerProps> = ({
               viewBox={`0 0 ${radius * 2} ${radius * 2}`}
               className="w-full h-full cursor-pointer"
               onMouseDown={handleMouseDown}
+              onClick={handleArcClick}
             >
               <defs>
                 <linearGradient id="speedGradient" x1="0%" y1="0%" x2="100%" y1="0%">

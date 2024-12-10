@@ -22,6 +22,14 @@
     --muted: 240 3.8% 46.1%;
     --warning: 38 92% 50%;
     --success: 142 71% 45%;
+    --input: 0 0% 98%;
+    --ring: 221.2 83.2% 53.3%;
+    --secondary: 240 10% 3.9%;
+    --secondary-foreground: 0 0% 98%;
+    --accent: 142 71% 45%;
+    --accent-foreground: 240 10% 3.9%;
+    --destructive: 38 92% 50%;
+    --destructive-foreground: 240 10% 3.9%;
   }
 
   [data-theme="dark"] {
@@ -37,50 +45,99 @@
     --muted: 240 5% 64.9%;
     --warning: 48 96% 53%;
     --success: 142 71% 45%;
-  }
-
-  html {
-    -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none;
-    @apply touch-manipulation;
+    --input: 240 10% 3.9%;
+    --ring: 217.2 91.2% 59.8%;
+    --secondary: 240 10% 3.9%;
+    --secondary-foreground: 0 0% 98%;
+    --accent: 142 71% 45%;
+    --accent-foreground: 240 10% 3.9%;
+    --destructive: 48 96% 53%;
+    --destructive-foreground: 240 10% 3.9%;
   }
 
   body {
-    @apply bg-background text-foreground antialiased overscroll-none;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    @apply bg-background text-foreground antialiased;
   }
 
-  /* Improve mobile form inputs */
+  /* Improved mobile tap targets */
+  button, a {
+    @apply cursor-pointer select-none;
+  }
+
+  /* Better form controls */
   input, select, textarea {
-    @apply appearance-none;
-    font-size: 16px !important; /* Prevents iOS zoom */
+    @apply bg-input text-foreground border-border rounded-md px-3 py-2;
+    @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background;
   }
 
-  /* Hide scrollbar but keep functionality */
-  .scrollbar-hide {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+  /* Card styles */
+  .card {
+    @apply bg-card text-card-foreground rounded-lg border border-border/50;
+    @apply hover:border-border/80 transition-colors duration-200;
   }
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
+
+  /* Button styles */
+  .btn {
+    @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+    @apply disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/90;
+  }
+
+  .btn-accent {
+    @apply bg-accent text-accent-foreground hover:bg-accent/90;
+  }
+
+  .btn-destructive {
+    @apply bg-destructive text-destructive-foreground hover:bg-destructive/90;
+  }
+
+  /* Typography */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold tracking-tight;
+  }
+
+  h1 {
+    @apply text-4xl sm:text-5xl;
+  }
+
+  h2 {
+    @apply text-3xl sm:text-4xl;
+  }
+
+  h3 {
+    @apply text-2xl sm:text-3xl;
+  }
+
+  p {
+    @apply leading-7;
+  }
+
+  /* Container */
+  .container {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Mobile optimizations */
+  @media (max-width: 640px) {
+    input, select, textarea, button {
+      @apply text-base;
+    }
+
+    .btn {
+      @apply px-4 py-2.5;
+    }
   }
 }
 
 @layer components {
-  .btn {
-    @apply px-4 py-2 rounded-md font-medium transition-all duration-200 min-h-[44px] min-w-[44px] touch-manipulation;
-  }
-
-  .btn-primary {
-    @apply btn bg-primary text-primary-foreground hover:bg-primary-hover active:scale-[0.98];
-  }
-
-  .btn-secondary {
-    @apply btn bg-card text-foreground hover:bg-card-hover active:scale-[0.98];
-  }
-
   /* Safe area utilities */
   .safe-area-inset-top {
     padding-top: var(--sat);
