@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Edit2 } from 'lucide-react';
 import useDevice from '../hooks/useDevice';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -69,148 +69,204 @@ const BuyoutCalculator: React.FC = () => {
   const canBuyoutInFull = breakdown.customerPayment === 0;
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white">Contract Buyout Calculator</h2>
-      <p className="text-gray-400">
-        Calculate your contract buyout costs and potential savings.
-      </p>
-      
-      <div className="p-6 bg-gray-800 rounded-lg">
-        <div className="space-y-4">
-          {/* Provider Selection */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Current Provider
-            </label>
-            <select
-              value={provider}
-              onChange={(e) => setProvider(e.target.value)}
-              className="w-full bg-gray-700 border-gray-600 rounded-md text-white"
-            >
-              <option value="">Select Provider</option>
-              {providers.map((p) => (
-                <option key={p} value={p}>{p}</option>
-              ))}
-            </select>
+    <div className="space-y-4 p-4 max-w-2xl mx-auto">
+      <div className="grid gap-4">
+        {/* Provider Selection */}
+        <motion.div
+          className="space-y-4 rounded-xl bg-card/50 p-6"
+          animate={{ opacity: 1 }}
+        >
+          <h3 className="text-lg font-medium">Who's your provider?</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {providers.map(p => (
+              <motion.button
+                key={p}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setProvider(p)}
+                className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                  provider === p
+                    ? 'border-primary bg-primary/5 shadow-lg shadow-primary/10'
+                    : 'border-transparent bg-card/50 hover:border-primary/20'
+                }`}
+              >
+                {p}
+              </motion.button>
+            ))}
           </div>
+        </motion.div>
 
-          {/* Monthly Bill */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Monthly Bill
-            </label>
-            {isEditingBill ? (
+        {/* Monthly Bill */}
+        <motion.div 
+          className="rounded-xl bg-card/50 p-6"
+          animate={{ opacity: provider ? 1 : 0.8 }}
+        >
+          <h3 className="text-lg font-medium mb-4">Monthly Bill</h3>
+          {isEditingBill ? (
+            <motion.div
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="relative"
+            >
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">£</span>
               <input
                 type="number"
                 value={monthlyBill}
                 onChange={(e) => setMonthlyBill(e.target.value)}
                 onBlur={() => setIsEditingBill(false)}
-                className="w-full bg-gray-700 border-gray-600 rounded-md text-white"
                 autoFocus
+                className="w-full p-3 pl-8 bg-transparent border-none focus:ring-0 text-xl font-medium"
+                placeholder="0.00"
+                step="0.01"
               />
-            ) : (
-              <div
-                onClick={() => setIsEditingBill(true)}
-                className="cursor-pointer p-2 bg-gray-700 rounded-md text-white"
+            </motion.div>
+          ) : (
+            <motion.div
+              className="flex items-center justify-between group cursor-pointer"
+              onClick={() => setIsEditingBill(true)}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <span className="text-xl font-medium">
+                {monthlyBill ? `£${parseFloat(monthlyBill).toFixed(2)}` : 'Click to enter'}
+              </span>
+              <Edit2 className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </motion.div>
+          )}
+        </motion.div>
+
+        {/* Contract Length */}
+        <motion.div
+          className="rounded-xl bg-card/50 p-6 space-y-4"
+          animate={{ opacity: monthlyBill ? 1 : 0.8 }}
+        >
+          <h3 className="text-lg font-medium">Contract Length</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {presetPeriods.map(period => (
+              <motion.button
+                key={period.value}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  setContractEndType('preset');
+                  setContractLength(period.value);
+                }}
+                className={`p-4 rounded-xl border-2 transition-all ${
+                  contractEndType === 'preset' && contractLength === period.value
+                    ? 'border-primary bg-primary/5 shadow-lg shadow-primary/10'
+                    : 'border-transparent bg-card/50 hover:border-primary/20'
+                }`}
               >
-                £{monthlyBill || '0.00'}
-              </div>
-            )}
+                {period.label}
+              </motion.button>
+            ))}
+          </div>
+          
+          <div className="relative">
+            <input
+              type="date"
+              value={customDate}
+              onChange={(e) => {
+                setContractEndType('custom');
+                setCustomDate(e.target.value);
+              }}
+              className="w-full p-4 rounded-lg bg-transparent border border-border/50 focus:border-primary focus:ring-0 text-base"
+              min={new Date().toISOString().split('T')[0]}
+            />
+          </div>
+        </motion.div>
+
+        {/* Summary */}
+        <motion.div
+          className={`p-6 rounded-xl border-2 space-y-4 ${
+            canBuyoutInFull 
+              ? 'bg-green-500/5 border-green-500/20' 
+              : 'bg-yellow-500/5 border-yellow-500/20'
+          }`}
+          animate={{ opacity: 1 }}
+        >
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-medium">Breakdown</h3>
           </div>
 
-          {/* Contract End Date */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Contract End Date
-            </label>
-            <div className="space-y-2">
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setContractEndType('preset')}
-                  className={`px-4 py-2 rounded-md ${
-                    contractEndType === 'preset'
-                      ? 'bg-cyan-500 text-white'
-                      : 'bg-gray-700 text-gray-300'
-                  }`}
-                >
-                  Preset
-                </button>
-                <button
-                  onClick={() => setContractEndType('custom')}
-                  className={`px-4 py-2 rounded-md ${
-                    contractEndType === 'custom'
-                      ? 'bg-cyan-500 text-white'
-                      : 'bg-gray-700 text-gray-300'
-                  }`}
-                >
-                  Custom
-                </button>
-              </div>
-
-              {contractEndType === 'preset' ? (
-                <div className="grid grid-cols-2 gap-2">
-                  {presetPeriods.map((period) => (
-                    <button
-                      key={period.value}
-                      onClick={() => setContractLength(period.value)}
-                      className={`px-4 py-2 rounded-md ${
-                        contractLength === period.value
-                          ? 'bg-cyan-500 text-white'
-                          : 'bg-gray-700 text-gray-300'
-                      }`}
-                    >
-                      {period.label}
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <input
-                  type="date"
-                  value={customDate}
-                  onChange={(e) => setCustomDate(e.target.value)}
-                  className="w-full bg-gray-700 border-gray-600 rounded-md text-white"
-                />
-              )}
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            className="space-y-3 overflow-hidden"
+          >
+            <div className="grid gap-2">
+              <motion.div 
+                className="flex justify-between items-center p-3 rounded-lg bg-black/5"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                <span className="text-gray-500">Monthly Bill</span>
+                <span className="font-medium">£{breakdown.monthlyBill.toFixed(2)}</span>
+              </motion.div>
+              
+              <motion.div 
+                className="flex justify-between items-center p-3 rounded-lg bg-black/5"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <span className="text-gray-500">Months Remaining</span>
+                <span className="font-medium">{breakdown.monthsRemaining}</span>
+              </motion.div>
+              
+              <motion.div 
+                className="flex justify-between items-center p-3 rounded-lg bg-black/5"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <span className="text-gray-500">Total (inc. VAT)</span>
+                <span className="font-medium">£{breakdown.totalWithVAT.toFixed(2)}</span>
+              </motion.div>
+              
+              <motion.div 
+                className="flex justify-between items-center p-3 rounded-lg bg-black/5"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <span className="text-gray-500">VAT Amount</span>
+                <span className="font-medium">£{breakdown.vatAmount.toFixed(2)}</span>
+              </motion.div>
+              
+              <motion.div 
+                className="flex justify-between items-center p-3 rounded-lg bg-black/5"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5 }}
+              >
+                <span className="text-gray-500">Our Contribution</span>
+                <span className="font-medium text-green-500">-£{breakdown.contribution.toFixed(2)}</span>
+              </motion.div>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Results */}
-          <div className="mt-6 p-4 bg-gray-700 rounded-lg">
-            <h3 className="text-lg font-semibold text-white mb-4">Breakdown</h3>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-300">Monthly Bill</span>
-                <span className="text-white">£{breakdown.monthlyBill.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-300">Months Remaining</span>
-                <span className="text-white">{breakdown.monthsRemaining}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-300">Total (inc. VAT)</span>
-                <span className="text-white">£{breakdown.totalWithVAT.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-300">VAT Amount</span>
-                <span className="text-white">£{breakdown.vatAmount.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-300">Total (ex. VAT)</span>
-                <span className="text-white">£{breakdown.totalExVAT.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-cyan-400">
-                <span>Our Contribution</span>
-                <span>£{breakdown.contribution.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between font-bold text-lg">
-                <span className="text-white">You Pay</span>
-                <span className={canBuyoutInFull ? 'text-green-400' : 'text-white'}>
-                  £{breakdown.customerPayment.toFixed(2)}
-                </span>
-              </div>
+          <motion.div 
+            className="pt-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+          >
+            <div className="flex items-center justify-between">
+              <span className="font-medium">Final Payment</span>
+              <span className={`text-2xl font-bold ${canBuyoutInFull ? 'text-green-500' : 'text-yellow-500'}`}>
+                {canBuyoutInFull ? '£0.00' : `£${breakdown.customerPayment.toFixed(2)}`}
+              </span>
             </div>
-          </div>
-        </div>
+
+            <p className={`mt-2 text-sm ${canBuyoutInFull ? 'text-green-600/80' : 'text-yellow-600/80'}`}>
+              {canBuyoutInFull 
+                ? 'Great news! We\'ll cover your entire buyout cost.'
+                : 'Additional payment needed to complete your buyout.'}
+            </p>
+          </motion.div>
+        </motion.div>
       </div>
     </div>
   );
