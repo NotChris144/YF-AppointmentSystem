@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import HomePage from './pages/HomePage';
 import SpeedTest from './pages/SpeedTest';
+import BuyoutCalculator from './components/BuyoutCalculator';
 
 function App() {
   return (
@@ -10,8 +11,9 @@ function App() {
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />
+          <Route path="speed-test" element={<SpeedTest />} />
+          <Route path="calculator" element={<BuyoutCalculator />} />
         </Route>
-        <Route path="/speed-test" element={<SpeedTest />} />
       </Routes>
     </BrowserRouter>
   );
