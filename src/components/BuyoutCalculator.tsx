@@ -224,7 +224,12 @@ const BuyoutCalculator: React.FC = () => {
                 transition={{ delay: 0.1 }}
               >
                 <span className="text-gray-500">Monthly Bill</span>
-                <span className="font-medium">£{breakdown.monthlyBill.toFixed(2)}</span>
+                <div className="text-right">
+                  <span className="font-medium">£{breakdown.monthlyBill.toFixed(2)}</span>
+                  <div className="text-sm text-gray-500">
+                    £{(breakdown.monthlyBill * (1 + VAT_RATE)).toFixed(2)} inc. VAT
+                  </div>
+                </div>
               </motion.div>
               
               <motion.div 
