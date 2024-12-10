@@ -106,20 +106,43 @@ const BuyoutCalculator: React.FC = () => {
       
       const transformedPoint = svgPoint.matrixTransform(speedoRef.current.getScreenCTM()?.inverse());
       
+      // Calculate distance from center to check if we're near the arc
       const dx = transformedPoint.x - 150;
       const dy = transformedPoint.y - 150;
-      let angle = Math.atan2(dy, dx) * (180 / Math.PI);
+      const distanceFromCenter = Math.sqrt(dx * dx + dy * dy);
       
-      if (angle < -180) angle = -180;
-      if (angle > 0) angle = 0;
+      // Only process if we're near the arc (within 20 pixels)
+      if (Math.abs(distanceFromCenter - 130) <= 20) {
+        let angle = Math.atan2(dy, dx) * (180 / Math.PI);
+        
+        // Normalize angle to -180 to 0 range
+        if (angle < -180) angle = -180;
+        if (angle > 0) angle = 0;
 
-      const newSpeed = Math.round(calculateSpeedFromAngle(angle));
-      onChange(Math.min(maxValue, Math.max(0, newSpeed)));
+        const newSpeed = Math.round(calculateSpeedFromAngle(angle));
+        onChange(Math.min(maxValue, Math.max(0, newSpeed)));
+      }
     };
 
     const handleMouseDown = (event: React.MouseEvent) => {
-      setIsDragging(true);
-      calculateSpeedFromMousePosition(event);
+      const svgRect = speedoRef.current?.getBoundingClientRect();
+      if (!svgRect) return;
+
+      const svgPoint = speedoRef.current!.createSVGPoint();
+      svgPoint.x = event.clientX;
+      svgPoint.y = event.clientY;
+      
+      const transformedPoint = svgPoint.matrixTransform(speedoRef.current!.getScreenCTM()?.inverse());
+      
+      // Check if click is near the arc
+      const dx = transformedPoint.x - 150;
+      const dy = transformedPoint.y - 150;
+      const distanceFromCenter = Math.sqrt(dx * dx + dy * dy);
+      
+      if (Math.abs(distanceFromCenter - 130) <= 20) {
+        setIsDragging(true);
+        calculateSpeedFromMousePosition(event);
+      }
       event.preventDefault();
     };
 
@@ -257,29 +280,29 @@ const BuyoutCalculator: React.FC = () => {
                 }}
               />
             </svg>
-
-            {/* Speed Value */}
-            <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 text-center">
-              {isEditing ? (
-                <input
-                  type="number"
-                  value={value}
-                  onChange={(e) => onChange(Math.min(maxValue, Math.max(0, Number(e.target.value))))}
-                  onBlur={() => setIsEditing(false)}
-                  className="w-24 text-4xl font-bold text-cyan-400 bg-transparent border-none text-center focus:ring-0"
-                  autoFocus
-                />
-              ) : (
-                <div 
-                  className="text-4xl font-bold text-cyan-400 cursor-pointer"
-                  onClick={() => setIsEditing(true)}
-                >
-                  {value.toFixed(0)}
-                  <span className="text-sm font-normal text-gray-400 ml-1">Mbps</span>
-                </div>
-              )}
-            </div>
           </div>
+        </div>
+
+        {/* Speed Value */}
+        <div className="mt-8 text-center">
+          {isEditing ? (
+            <input
+              type="number"
+              value={value}
+              onChange={(e) => onChange(Math.min(maxValue, Math.max(0, Number(e.target.value))))}
+              onBlur={() => setIsEditing(false)}
+              className="w-24 text-4xl font-bold text-cyan-400 bg-transparent border-none text-center focus:ring-0"
+              autoFocus
+            />
+          ) : (
+            <div 
+              className="text-4xl font-bold text-cyan-400 cursor-pointer"
+              onClick={() => setIsEditing(true)}
+            >
+              {value.toFixed(0)}
+              <span className="text-sm font-normal text-gray-400 ml-1">Mbps</span>
+            </div>
+          )}
         </div>
       </div>
     );
