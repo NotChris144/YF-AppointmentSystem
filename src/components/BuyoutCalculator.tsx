@@ -170,7 +170,7 @@ const BuyoutCalculator: React.FC = () => {
     return (
       <div className="relative w-full max-w-[500px] mx-auto">
         {/* Type Indicator */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 flex items-center gap-2 text-gray-400">
+        <div className="mb-8 flex items-center justify-center gap-2 text-gray-400">
           {type === 'download' ? <ArrowDownIcon className="w-5 h-5" /> : <ArrowUpIcon className="w-5 h-5" />}
           <span className="text-sm font-medium">{type === 'download' ? 'Download' : 'Upload'}</span>
         </div>
@@ -227,7 +227,7 @@ const BuyoutCalculator: React.FC = () => {
                         fontSize="12"
                         textAnchor="middle"
                         dominantBaseline="middle"
-                        transform={`rotate(${markerAngle}, ${textX}, ${textY})`}
+                        style={{ userSelect: 'none' }}
                       >
                         {speed}
                       </text>
@@ -259,7 +259,7 @@ const BuyoutCalculator: React.FC = () => {
             </svg>
 
             {/* Speed Value */}
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-center">
+            <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 text-center">
               {isEditing ? (
                 <input
                   type="number"
