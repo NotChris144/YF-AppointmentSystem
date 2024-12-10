@@ -45,10 +45,20 @@ const NumberPad: React.FC<NumberPadProps> = ({
   const handleNumberClick = (num: string) => {
     if (disabled) return;
 
-    let newValue = unformatNumber(displayValue + num);
+    let newValue = unformatNumber(displayValue);
     
     // Handle decimal point
-    if (num === '.' && displayValue.includes('.')) return;
+    if (num === '.') {
+      if (newValue.includes('.')) return;
+      newValue = newValue + num;
+    } else {
+      // Replace initial 0 with the new number
+      if (newValue === '0') {
+        newValue = num;
+      } else {
+        newValue = newValue + num;
+      }
+    }
     
     // Validate max decimal places
     const parts = newValue.split('.');
