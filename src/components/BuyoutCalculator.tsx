@@ -7,9 +7,9 @@ import NumberInput from './ui/NumberInput';
 interface BuyoutBreakdown {
   monthlyBill: number;
   monthsRemaining: number;
-  totalWithVAT: number;
-  vatAmount: number;
+  totalCost: number;
   totalExVAT: number;
+  vatAmount: number;
   contribution: number;
   customerPayment: number;
 }
@@ -87,17 +87,17 @@ const BuyoutCalculator: React.FC = () => {
   const calculateBreakdown = (): BuyoutBreakdown => {
     const monthlyAmount = parseFloat(monthlyBill) || 0;
     const months = calculateMonthsRemaining();
-    const totalWithVAT = monthlyAmount * months;
-    const totalExVAT = totalWithVAT / (1 + VAT_RATE);
-    const vatAmount = totalWithVAT - totalExVAT;
+    const totalCost = monthlyAmount * months;
+    const totalExVAT = totalCost / (1 + VAT_RATE);
+    const vatAmount = totalCost - totalExVAT;
     const customerPayment = Math.max(0, totalExVAT - BUYOUT_CONTRIBUTION);
     
     return {
       monthlyBill: monthlyAmount,
       monthsRemaining: months,
-      totalWithVAT,
-      vatAmount,
+      totalCost,
       totalExVAT,
+      vatAmount,
       contribution: Math.min(BUYOUT_CONTRIBUTION, totalExVAT),
       customerPayment
     };
@@ -214,11 +214,11 @@ const BuyoutCalculator: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
-            className="space-y-3 overflow-hidden"
+            className="space-y-4 overflow-hidden"
           >
-            <div className="grid gap-2">
+            <div className="grid gap-3">
               <motion.div 
-                className="flex justify-between items-center p-3 rounded-lg bg-black/5"
+                className="flex justify-between items-center p-4 rounded-lg bg-black/5"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.1 }}
@@ -228,7 +228,7 @@ const BuyoutCalculator: React.FC = () => {
               </motion.div>
               
               <motion.div 
-                className="flex justify-between items-center p-3 rounded-lg bg-black/5"
+                className="flex justify-between items-center p-4 rounded-lg bg-black/5"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
@@ -238,35 +238,40 @@ const BuyoutCalculator: React.FC = () => {
               </motion.div>
               
               <motion.div 
-                className="flex justify-between items-center p-3 rounded-lg bg-black/5"
+                className="flex justify-between items-center p-4 rounded-lg bg-black/5"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 }}
               >
                 <span className="text-gray-500">Total Cost</span>
-                <div className="text-right">
-                  <span className="font-medium">£{breakdown.totalExVAT.toFixed(2)}</span>
-                  <div className="text-sm text-gray-500">
-                    £{breakdown.totalWithVAT.toFixed(2)} inc. VAT
-                  </div>
-                </div>
+                <span className="font-medium">£{breakdown.totalCost.toFixed(2)}</span>
               </motion.div>
-              
+
               <motion.div 
-                className="flex justify-between items-center p-3 rounded-lg bg-black/5"
+                className="flex justify-between items-center p-4 rounded-lg bg-black/5"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 }}
+              >
+                <span className="text-gray-500">Total Cost - VAT</span>
+                <span className="font-medium">£{breakdown.totalExVAT.toFixed(2)}</span>
+              </motion.div>
+              
+              <motion.div 
+                className="flex justify-between items-center p-4 rounded-lg bg-black/5"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5 }}
               >
                 <span className="text-gray-500">VAT Amount</span>
                 <span className="font-medium">£{breakdown.vatAmount.toFixed(2)}</span>
               </motion.div>
               
               <motion.div 
-                className="flex justify-between items-center p-3 rounded-lg bg-black/5"
+                className="flex justify-between items-center p-4 rounded-lg bg-black/5"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5 }}
+                transition={{ delay: 0.6 }}
               >
                 <span className="text-gray-500">Our Contribution</span>
                 <span className="font-medium text-green-500">-£{breakdown.contribution.toFixed(2)}</span>
@@ -275,23 +280,22 @@ const BuyoutCalculator: React.FC = () => {
           </motion.div>
 
           <motion.div 
-            className="pt-4"
+            className="pt-6"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
+            transition={{ delay: 0.7 }}
           >
-            <div className="flex items-center justify-between">
-              <span className="font-medium">Final Payment</span>
-              <span className={`text-2xl font-bold ${canBuyoutInFull ? 'text-green-500' : 'text-yellow-500'}`}>
-                {canBuyoutInFull ? '£0.00' : `£${breakdown.customerPayment.toFixed(2)}`}
+            <div className="text-center">
+              <span className="text-lg font-medium mb-2 block">Final Payment</span>
+              <span className={`text-3xl font-bold block mb-3 ${canBuyoutInFull ? 'text-green-500' : 'text-yellow-500'}`}>
+                £{breakdown.customerPayment.toFixed(2)}
               </span>
+              <p className={`text-sm ${canBuyoutInFull ? 'text-green-600/80' : 'text-yellow-600/80'}`}>
+                {canBuyoutInFull 
+                  ? 'Great news! We\'ll cover your entire buyout cost.'
+                  : 'Additional payment needed to complete your buyout.'}
+              </p>
             </div>
-
-            <p className={`mt-2 text-sm ${canBuyoutInFull ? 'text-green-600/80' : 'text-yellow-600/80'}`}>
-              {canBuyoutInFull 
-                ? 'Great news! We\'ll cover your entire buyout cost.'
-                : 'Additional payment needed to complete your buyout.'}
-            </p>
           </motion.div>
         </motion.div>
       </div>
