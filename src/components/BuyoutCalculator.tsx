@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { AlertTriangle, Edit2 } from 'lucide-react';
+import { AlertTriangle, Edit2, X } from 'lucide-react';
 import useDevice from '../hooks/useDevice';
 import { motion, AnimatePresence } from 'framer-motion';
+import NumberPad from './ui/NumberPad';
 import NumberInput from './ui/NumberInput';
+import { cn } from '@/lib/utils';
 
 interface BuyoutBreakdown {
   monthlyBill: number;
@@ -17,7 +19,7 @@ interface BuyoutBreakdown {
 const BuyoutCalculator: React.FC = () => {
   const { isMobile } = useDevice();
   const [provider, setProvider] = useState('');
-  const [monthlyBill, setMonthlyBill] = useState('');
+  const [monthlyBill, setMonthlyBill] = useState('0');
   const [isEditingBill, setIsEditingBill] = useState(false);
   const [contractEndType, setContractEndType] = useState<'preset' | 'custom' | null>(null);
   const [contractLength, setContractLength] = useState<string | null>(null);
@@ -109,6 +111,14 @@ const BuyoutCalculator: React.FC = () => {
   const breakdown = calculateBreakdown();
   const canBuyoutInFull = breakdown.customerPayment === 0;
 
+  const handleBillChange = (value: string) => {
+    setMonthlyBill(value);
+  };
+
+  const toggleBillEdit = () => {
+    setIsEditingBill(!isEditingBill);
+  };
+
   useEffect(() => {
     const hasRequiredFields = monthlyBill !== '' && contractLength !== null;
     setShowBreakdown(hasRequiredFields);
@@ -129,200 +139,232 @@ const BuyoutCalculator: React.FC = () => {
   }, [monthlyBill, contractLength]);
 
   return (
-    <div className="w-full max-w-3xl mx-auto">
-      <div className="grid gap-3 sm:gap-4">
-        {/* Provider Selection */}
-        <motion.div
-          className="space-y-4 rounded-xl bg-card/50 p-4 sm:p-6"
-          animate={{ opacity: 1 }}
+    <div className="w-full max-w-4xl mx-auto p-4 space-y-8">
+      {/* Monthly Bill Input */}
+      <div className="relative">
+        <div 
+          className={cn(
+            "w-full p-4 rounded-lg bg-white/5 backdrop-blur-sm cursor-pointer hover:bg-white/10 transition-colors",
+            "flex items-center justify-between"
+          )}
+          onClick={toggleBillEdit}
         >
-          <h3 className="text-lg font-medium">Who's your provider?</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {providers.map(p => (
-              <motion.button
-                key={p}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => handleProviderClick(p)}
-                className={`p-4 rounded-xl border-2 transition-all ${
-                  provider === p
-                    ? 'border-primary bg-primary/5 shadow-lg shadow-primary/10'
-                    : 'border-transparent bg-card/50 hover:border-primary/20'
-                }`}
-              >
-                {p}
-              </motion.button>
-            ))}
+          <div>
+            <label className="text-sm text-gray-400">Monthly Bill</label>
+            <div className="text-2xl font-bold">£{parseFloat(monthlyBill).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
           </div>
-        </motion.div>
+          <Edit2 className="w-5 h-5 text-gray-400" />
+        </div>
 
-        {/* Monthly Bill */}
-        <motion.div 
-          className="rounded-xl bg-card/50 p-4 sm:p-6 space-y-4"
-          animate={{ opacity: provider ? 1 : 0.8 }}
-        >
-          <h3 className="text-lg font-medium mb-4">Monthly Bill</h3>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <span className="text-gray-500">£</span>
-            </div>
-            <input
-              type="text"
-              value={monthlyBill}
-              onChange={(e) => {
-                const value = e.target.value.replace(/[^0-9.]/g, '');
-                if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
-                  setMonthlyBill(value);
-                }
-              }}
-              placeholder="0.00"
-              className="w-full p-3 pl-7 rounded-lg bg-transparent border border-border/50 focus:border-primary focus:ring-0 text-base"
-            />
-          </div>
-        </motion.div>
-
-        {/* Contract Length */}
-        <motion.div
-          className="rounded-xl bg-card/50 p-4 sm:p-6 space-y-4"
-          animate={{ opacity: monthlyBill ? 1 : 0.8 }}
-        >
-          <h3 className="text-lg font-medium">Contract Length</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {presetPeriods.map(period => (
-              <motion.button
-                key={period.value}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => handlePresetPeriodClick(period.value)}
-                className={`p-4 rounded-xl border-2 transition-all ${
-                  contractEndType === 'preset' && contractLength === period.value
-                    ? 'border-primary bg-primary/5 shadow-lg shadow-primary/10'
-                    : 'border-transparent bg-card/50 hover:border-primary/20'
-                }`}
-              >
-                {period.label}
-              </motion.button>
-            ))}
-          </div>
-          
-          <div className="relative">
-            <input
-              type="date"
-              value={customDate}
-              onChange={handleCustomDateChange}
-              className={`w-full p-4 rounded-lg bg-transparent border transition-all ${
-                contractEndType === 'custom'
-                  ? 'border-primary bg-primary/5'
-                  : 'border-border/50'
-              } focus:border-primary focus:ring-0 text-base`}
-              min={new Date().toISOString().split('T')[0]}
-            />
-          </div>
-        </motion.div>
-
-        {/* Summary */}
+        {/* Number Pad Modal */}
         <AnimatePresence>
-          {showBreakdown && (
-            <motion.div
-              className={`p-4 sm:p-6 rounded-xl border-2 space-y-4 ${
-                canBuyoutInFull 
-                  ? 'bg-green-500/5 border-green-500/20' 
-                  : 'bg-yellow-500/5 border-yellow-500/20'
-              }`}
-              initial={{ opacity: 0, height: 0, y: 20 }}
-              animate={{ opacity: 1, height: "auto", y: 0 }}
-              exit={{ opacity: 0, height: 0, y: 20 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium">Breakdown</h3>
-              </div>
+          {isEditingBill && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+                onClick={toggleBillEdit}
+              />
 
-              <motion.div className="space-y-4 overflow-hidden">
-                <div className="grid gap-3">
-                  {[
-                    {
-                      label: "Monthly Bill",
-                      value: `£${breakdown.monthlyBill.toFixed(2)}`,
-                      step: 0
-                    },
-                    {
-                      label: "Months Remaining",
-                      value: breakdown.monthsRemaining,
-                      step: 1
-                    },
-                    {
-                      label: "Total Cost",
-                      value: `£${breakdown.totalCost.toFixed(2)}`,
-                      step: 2
-                    },
-                    {
-                      label: "Total Cost - VAT",
-                      value: `£${breakdown.totalExVAT.toFixed(2)}`,
-                      step: 3
-                    },
-                    {
-                      label: "VAT Amount",
-                      value: `£${breakdown.vatAmount.toFixed(2)}`,
-                      step: 4
-                    },
-                    {
-                      label: "Our Contribution",
-                      value: `-£${breakdown.contribution.toFixed(2)}`,
-                      isGreen: true,
-                      step: 5
-                    }
-                  ].map((item, index) => (
-                    <motion.div
-                      key={item.label}
-                      className="flex justify-between items-center p-4 rounded-lg bg-black/5"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ 
-                        opacity: animationStep >= item.step ? 1 : 0,
-                        x: animationStep >= item.step ? 0 : -20
-                      }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <span className="text-gray-500">{item.label}</span>
-                      <span className={`font-medium ${item.isGreen ? 'text-green-500' : ''}`}>
-                        {item.value}
-                      </span>
-                    </motion.div>
-                  ))}
+              {/* Modal */}
+              <motion.div
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 50 }}
+                className="fixed inset-x-0 bottom-0 z-50 bg-gray-900 rounded-t-2xl shadow-2xl"
+              >
+                <div className="flex justify-between items-center p-4 border-b border-gray-800">
+                  <h3 className="text-lg font-semibold">Enter Monthly Bill</h3>
+                  <button
+                    onClick={toggleBillEdit}
+                    className="p-2 hover:bg-gray-800 rounded-full transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
 
-                <motion.div
-                  className="pt-6"
-                  initial={{ opacity: 0 }}
-                  animate={{ 
-                    opacity: animationStep >= 6 ? 1 : 0
-                  }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <div className="text-center">
-                    <span className="text-lg font-medium mb-2 block">Final Payment</span>
-                    <span className={`text-3xl font-bold block mb-3 ${canBuyoutInFull ? 'text-green-500' : 'text-yellow-500'}`}>
-                      £{breakdown.customerPayment.toFixed(2)}
-                    </span>
-                    <motion.p
-                      className={`text-sm ${canBuyoutInFull ? 'text-green-600/80' : 'text-yellow-600/80'}`}
-                      initial={{ opacity: 0 }}
-                      animate={{ 
-                        opacity: animationStep >= 7 ? 1 : 0
-                      }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      {canBuyoutInFull 
-                        ? 'Great news! We\'ll cover your entire buyout cost.'
-                        : 'Additional payment needed to complete your buyout.'}
-                    </motion.p>
-                  </div>
-                </motion.div>
+                <NumberPad
+                  value={monthlyBill}
+                  onChange={handleBillChange}
+                  maxValue={999.99}
+                  minValue={0}
+                  prefix="£"
+                />
               </motion.div>
-            </motion.div>
+            </>
           )}
         </AnimatePresence>
       </div>
+
+      {/* Provider Selection */}
+      <motion.div
+        className="space-y-4 rounded-xl bg-card/50 p-4 sm:p-6"
+        animate={{ opacity: 1 }}
+      >
+        <h3 className="text-lg font-medium">Who's your provider?</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {providers.map(p => (
+            <motion.button
+              key={p}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => handleProviderClick(p)}
+              className={`p-4 rounded-xl border-2 transition-all ${
+                provider === p
+                  ? 'border-primary bg-primary/5 shadow-lg shadow-primary/10'
+                  : 'border-transparent bg-card/50 hover:border-primary/20'
+              }`}
+            >
+              {p}
+            </motion.button>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* Contract Length */}
+      <motion.div
+        className="rounded-xl bg-card/50 p-4 sm:p-6 space-y-4"
+        animate={{ opacity: monthlyBill ? 1 : 0.8 }}
+      >
+        <h3 className="text-lg font-medium">Contract Length</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {presetPeriods.map(period => (
+            <motion.button
+              key={period.value}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => handlePresetPeriodClick(period.value)}
+              className={`p-4 rounded-xl border-2 transition-all ${
+                contractEndType === 'preset' && contractLength === period.value
+                  ? 'border-primary bg-primary/5 shadow-lg shadow-primary/10'
+                  : 'border-transparent bg-card/50 hover:border-primary/20'
+              }`}
+            >
+              {period.label}
+            </motion.button>
+          ))}
+        </div>
+        
+        <div className="relative">
+          <input
+            type="date"
+            value={customDate}
+            onChange={handleCustomDateChange}
+            className={`w-full p-4 rounded-lg bg-transparent border transition-all ${
+              contractEndType === 'custom'
+                ? 'border-primary bg-primary/5'
+                : 'border-border/50'
+            } focus:border-primary focus:ring-0 text-base`}
+            min={new Date().toISOString().split('T')[0]}
+          />
+        </div>
+      </motion.div>
+
+      {/* Summary */}
+      <AnimatePresence>
+        {showBreakdown && (
+          <motion.div
+            className={`p-4 sm:p-6 rounded-xl border-2 space-y-4 ${
+              canBuyoutInFull 
+                ? 'bg-green-500/5 border-green-500/20' 
+                : 'bg-yellow-500/5 border-yellow-500/20'
+            }`}
+            initial={{ opacity: 0, height: 0, y: 20 }}
+            animate={{ opacity: 1, height: "auto", y: 0 }}
+            exit={{ opacity: 0, height: 0, y: 20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium">Breakdown</h3>
+            </div>
+
+            <motion.div className="space-y-4 overflow-hidden">
+              <div className="grid gap-3">
+                {[
+                  {
+                    label: "Monthly Bill",
+                    value: `£${breakdown.monthlyBill.toFixed(2)}`,
+                    step: 0
+                  },
+                  {
+                    label: "Months Remaining",
+                    value: breakdown.monthsRemaining,
+                    step: 1
+                  },
+                  {
+                    label: "Total Cost",
+                    value: `£${breakdown.totalCost.toFixed(2)}`,
+                    step: 2
+                  },
+                  {
+                    label: "Total Cost - VAT",
+                    value: `£${breakdown.totalExVAT.toFixed(2)}`,
+                    step: 3
+                  },
+                  {
+                    label: "VAT Amount",
+                    value: `£${breakdown.vatAmount.toFixed(2)}`,
+                    step: 4
+                  },
+                  {
+                    label: "Our Contribution",
+                    value: `-£${breakdown.contribution.toFixed(2)}`,
+                    isGreen: true,
+                    step: 5
+                  }
+                ].map((item, index) => (
+                  <motion.div
+                    key={item.label}
+                    className="flex justify-between items-center p-4 rounded-lg bg-black/5"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ 
+                      opacity: animationStep >= item.step ? 1 : 0,
+                      x: animationStep >= item.step ? 0 : -20
+                    }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <span className="text-gray-500">{item.label}</span>
+                    <span className={`font-medium ${item.isGreen ? 'text-green-500' : ''}`}>
+                      {item.value}
+                    </span>
+                  </motion.div>
+                ))}
+              </div>
+
+              <motion.div
+                className="pt-6"
+                initial={{ opacity: 0 }}
+                animate={{ 
+                  opacity: animationStep >= 6 ? 1 : 0
+                }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="text-center">
+                  <span className="text-lg font-medium mb-2 block">Final Payment</span>
+                  <span className={`text-3xl font-bold block mb-3 ${canBuyoutInFull ? 'text-green-500' : 'text-yellow-500'}`}>
+                    £{breakdown.customerPayment.toFixed(2)}
+                  </span>
+                  <motion.p
+                    className={`text-sm ${canBuyoutInFull ? 'text-green-600/80' : 'text-yellow-600/80'}`}
+                    initial={{ opacity: 0 }}
+                    animate={{ 
+                      opacity: animationStep >= 7 ? 1 : 0
+                    }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {canBuyoutInFull 
+                      ? 'Great news! We\'ll cover your entire buyout cost.'
+                      : 'Additional payment needed to complete your buyout.'}
+                  </motion.p>
+                </div>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
