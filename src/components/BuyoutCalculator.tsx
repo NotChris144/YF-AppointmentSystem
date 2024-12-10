@@ -70,11 +70,11 @@ const BuyoutCalculator: React.FC = () => {
   const canBuyoutInFull = breakdown.customerPayment === 0;
 
   return (
-    <div className="space-y-4 p-4 max-w-2xl mx-auto">
-      <div className="grid gap-4">
+    <div className="w-full max-w-3xl mx-auto">
+      <div className="grid gap-3 sm:gap-4">
         {/* Provider Selection */}
         <motion.div
-          className="space-y-4 rounded-xl bg-card/50 p-6"
+          className="space-y-4 rounded-xl bg-card/50 p-4 sm:p-6"
           animate={{ opacity: 1 }}
         >
           <h3 className="text-lg font-medium">Who's your provider?</h3>
@@ -99,7 +99,7 @@ const BuyoutCalculator: React.FC = () => {
 
         {/* Monthly Bill */}
         <motion.div 
-          className="rounded-xl bg-card/50 p-6"
+          className="rounded-xl bg-card/50 p-4 sm:p-6 space-y-4"
           animate={{ opacity: provider ? 1 : 0.8 }}
         >
           <h3 className="text-lg font-medium mb-4">Monthly Bill</h3>
@@ -112,7 +112,7 @@ const BuyoutCalculator: React.FC = () => {
 
         {/* Contract Length */}
         <motion.div
-          className="rounded-xl bg-card/50 p-6 space-y-4"
+          className="rounded-xl bg-card/50 p-4 sm:p-6 space-y-4"
           animate={{ opacity: monthlyBill ? 1 : 0.8 }}
         >
           <h3 className="text-lg font-medium">Contract Length</h3>
@@ -153,7 +153,7 @@ const BuyoutCalculator: React.FC = () => {
 
         {/* Summary */}
         <motion.div
-          className={`p-6 rounded-xl border-2 space-y-4 ${
+          className={`p-4 sm:p-6 rounded-xl border-2 space-y-4 ${
             canBuyoutInFull 
               ? 'bg-green-500/5 border-green-500/20' 
               : 'bg-yellow-500/5 border-yellow-500/20'
