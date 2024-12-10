@@ -85,7 +85,7 @@ const BuyoutCalculator: React.FC = () => {
   }> = ({ value, maxValue = 1000, onChange, type }) => {
     const [isDragging, setIsDragging] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const speedoRef = React.useRef<HTMLDivElement>(null);
+    const speedoRef = React.useRef<SVGSVGElement>(null);
 
     const calculateSpeedFromAngle = (angle: number) => {
       return (angle / 180) * maxValue;
@@ -98,19 +98,27 @@ const BuyoutCalculator: React.FC = () => {
     const calculateSpeedFromMousePosition = (event: React.MouseEvent | MouseEvent) => {
       if (!speedoRef.current) return;
 
-      const rect = speedoRef.current.getBoundingClientRect();
-      const centerX = rect.left + (rect.width / 2);
-      const centerY = rect.bottom;
+      const svgRect = speedoRef.current.getBoundingClientRect();
+      const svgPoint = speedoRef.current.createSVGPoint();
       
-      const angle = Math.atan2(
-        -(event.clientX - centerX),
-        -(event.clientY - centerY)
-      ) * (180 / Math.PI) + 180;
+      svgPoint.x = event.clientX;
+      svgPoint.y = event.clientY;
+      
+      // Transform mouse position to SVG coordinates
+      const transformedPoint = svgPoint.matrixTransform(speedoRef.current.getScreenCTM()?.inverse());
+      
+      // Calculate angle relative to center
+      const dx = transformedPoint.x - 150;
+      const dy = transformedPoint.y - 150;
+      let angle = Math.atan2(-dy, dx) * (180 / Math.PI) + 90;
+      
+      // Normalize angle to 0-180 range
+      if (angle < 0) angle += 360;
+      if (angle > 180) angle = 180;
+      if (angle < 0) angle = 0;
 
-      // Clamp angle between 0 and 180
-      const clampedAngle = Math.max(0, Math.min(180, angle));
-      const newSpeed = Math.round(calculateSpeedFromAngle(clampedAngle));
-      onChange(newSpeed);
+      const newSpeed = Math.round(calculateSpeedFromAngle(angle));
+      onChange(Math.min(maxValue, Math.max(0, newSpeed)));
     };
 
     const handleMouseDown = (event: React.MouseEvent) => {
@@ -140,23 +148,28 @@ const BuyoutCalculator: React.FC = () => {
       };
     }, [isDragging]);
 
-    const angle = calculateAngleFromSpeed(value);
-    const radius = 150; // SVG coordinate radius
+    const radius = 150;
     const strokeWidth = 16;
     const normalizedRadius = radius - strokeWidth / 2;
-  
-    // Calculate the path for the arc
+    const angle = calculateAngleFromSpeed(value);
+
     const getArcPath = (startAngle: number, endAngle: number) => {
-      const start = {
-        x: radius + normalizedRadius * Math.cos((startAngle - 180) * Math.PI / 180),
-        y: radius + normalizedRadius * Math.sin((startAngle - 180) * Math.PI / 180)
+      // Convert angles to radians and adjust for SVG coordinate system
+      const startRad = (startAngle - 90) * (Math.PI / 180);
+      const endRad = (endAngle - 90) * (Math.PI / 180);
+      
+      const startPoint = {
+        x: radius + (normalizedRadius * Math.cos(startRad)),
+        y: radius + (normalizedRadius * Math.sin(startRad))
       };
-      const end = {
-        x: radius + normalizedRadius * Math.cos((endAngle - 180) * Math.PI / 180),
-        y: radius + normalizedRadius * Math.sin((endAngle - 180) * Math.PI / 180)
+      
+      const endPoint = {
+        x: radius + (normalizedRadius * Math.cos(endRad)),
+        y: radius + (normalizedRadius * Math.sin(endRad))
       };
+
       const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
-      return `M ${start.x} ${start.y} A ${normalizedRadius} ${normalizedRadius} 0 ${largeArcFlag} 1 ${end.x} ${end.y}`;
+      return `M ${startPoint.x} ${startPoint.y} A ${normalizedRadius} ${normalizedRadius} 0 ${largeArcFlag} 1 ${endPoint.x} ${endPoint.y}`;
     };
 
     return (
@@ -168,11 +181,67 @@ const BuyoutCalculator: React.FC = () => {
         </div>
 
         <div className="relative w-full pt-[50%]">
-          <div className="absolute inset-0" ref={speedoRef} onMouseDown={handleMouseDown}>
+          <div className="absolute inset-0">
             <svg
+              ref={speedoRef}
               viewBox={`0 0 ${radius * 2} ${radius * 2}`}
-              className="w-full h-full"
+              className="w-full h-full cursor-pointer"
+              onMouseDown={handleMouseDown}
             >
+              <defs>
+                <linearGradient id="speedGradient" x1="0%" y1="0%" x2="100%" y1="0%">
+                  <stop offset="0%" stopColor={type === 'download' ? '#2dd4bf' : '#06b6d4'} />
+                  <stop offset="100%" stopColor={type === 'download' ? '#06b6d4' : '#2dd4bf'} />
+                </linearGradient>
+              </defs>
+
+              {/* Speed Markers */}
+              {[0, 200, 400, 600, 800, 1000].map((speed) => {
+                const markerAngle = (speed / maxValue) * 180 - 90;
+                const markerLength = speed % 400 === 0 ? 15 : 10;
+                const markerStart = normalizedRadius - markerLength;
+                const markerEnd = normalizedRadius + 5;
+                
+                const cos = Math.cos(markerAngle * Math.PI / 180);
+                const sin = Math.sin(markerAngle * Math.PI / 180);
+                
+                const x1 = radius + markerStart * cos;
+                const y1 = radius + markerStart * sin;
+                const x2 = radius + markerEnd * cos;
+                const y2 = radius + markerEnd * sin;
+                
+                // Text position
+                const textDistance = normalizedRadius - 25;
+                const textX = radius + textDistance * cos;
+                const textY = radius + textDistance * sin;
+
+                return (
+                  <g key={speed}>
+                    <line
+                      x1={x1}
+                      y1={y1}
+                      x2={x2}
+                      y2={y2}
+                      stroke="rgba(55, 65, 81, 0.3)"
+                      strokeWidth="2"
+                    />
+                    {speed % 200 === 0 && (
+                      <text
+                        x={textX}
+                        y={textY}
+                        fill="rgba(156, 163, 175, 0.5)"
+                        fontSize="12"
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        transform={`rotate(${markerAngle + 90}, ${textX}, ${textY})`}
+                      >
+                        {speed}
+                      </text>
+                    )}
+                  </g>
+                );
+              })}
+
               {/* Background Arc */}
               <path
                 d={getArcPath(0, 180)}
@@ -186,48 +255,13 @@ const BuyoutCalculator: React.FC = () => {
               <path
                 d={getArcPath(0, angle)}
                 fill="none"
-                stroke={type === 'download' ? '#2dd4bf' : '#06b6d4'}
+                stroke="url(#speedGradient)"
                 strokeWidth={strokeWidth}
                 strokeLinecap="round"
                 style={{
                   transition: isDragging ? 'none' : 'all 0.3s ease-out'
                 }}
               />
-
-              {/* Speed Markers */}
-              {[0, 200, 400, 600, 800, 1000].map((speed) => {
-                const markerAngle = calculateAngleFromSpeed(speed) - 180;
-                const markerX = radius + (radius - 30) * Math.cos(markerAngle * Math.PI / 180);
-                const markerY = radius + (radius - 30) * Math.sin(markerAngle * Math.PI / 180);
-                const textX = radius + (radius - 50) * Math.cos(markerAngle * Math.PI / 180);
-                const textY = radius + (radius - 50) * Math.sin(markerAngle * Math.PI / 180);
-
-                return (
-                  <g key={speed}>
-                    <line
-                      x1={radius + (radius - 20) * Math.cos(markerAngle * Math.PI / 180)}
-                      y1={radius + (radius - 20) * Math.sin(markerAngle * Math.PI / 180)}
-                      x2={markerX}
-                      y2={markerY}
-                      stroke="rgba(55, 65, 81, 0.3)"
-                      strokeWidth="2"
-                    />
-                    <text
-                      x={textX}
-                      y={textY}
-                      fill="rgba(156, 163, 175, 0.5)"
-                      fontSize="12"
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      style={{
-                        opacity: speed % 400 === 0 ? 1 : 0.5
-                      }}
-                    >
-                      {speed}
-                    </text>
-                  </g>
-                );
-              })}
             </svg>
 
             {/* Speed Value */}
