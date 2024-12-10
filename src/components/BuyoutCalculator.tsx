@@ -106,22 +106,17 @@ const BuyoutCalculator: React.FC = () => {
       
       const transformedPoint = svgPoint.matrixTransform(speedoRef.current.getScreenCTM()?.inverse());
       
-      // Calculate distance from center to check if we're near the arc
+      // Calculate angle from center regardless of distance
       const dx = transformedPoint.x - 150;
       const dy = transformedPoint.y - 150;
-      const distanceFromCenter = Math.sqrt(dx * dx + dy * dy);
+      let angle = Math.atan2(dy, dx) * (180 / Math.PI);
       
-      // Only process if we're near the arc (within 20 pixels)
-      if (Math.abs(distanceFromCenter - 130) <= 20) {
-        let angle = Math.atan2(dy, dx) * (180 / Math.PI);
-        
-        // Normalize angle to -180 to 0 range
-        if (angle < -180) angle = -180;
-        if (angle > 0) angle = 0;
+      // Normalize angle to -180 to 0 range
+      if (angle < -180) angle = -180;
+      if (angle > 0) angle = 0;
 
-        const newSpeed = Math.round(calculateSpeedFromAngle(angle));
-        onChange(Math.min(maxValue, Math.max(0, newSpeed)));
-      }
+      const newSpeed = Math.round(calculateSpeedFromAngle(angle));
+      onChange(Math.min(maxValue, Math.max(0, newSpeed)));
     };
 
     const handleMouseDown = (event: React.MouseEvent) => {
@@ -193,7 +188,7 @@ const BuyoutCalculator: React.FC = () => {
     return (
       <div className="relative w-full max-w-[500px] mx-auto">
         {/* Type Indicator */}
-        <div className="mb-8 flex items-center justify-center gap-2 text-gray-400">
+        <div className="mb-4 flex items-center justify-center gap-2 text-gray-400">
           {type === 'download' ? <ArrowDownIcon className="w-5 h-5" /> : <ArrowUpIcon className="w-5 h-5" />}
           <span className="text-sm font-medium">{type === 'download' ? 'Download' : 'Upload'}</span>
         </div>
@@ -284,7 +279,7 @@ const BuyoutCalculator: React.FC = () => {
         </div>
 
         {/* Speed Value */}
-        <div className="mt-8 text-center">
+        <div className="mt-2 text-center">
           {isEditing ? (
             <input
               type="number"
@@ -309,8 +304,8 @@ const BuyoutCalculator: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 p-4 max-w-2xl mx-auto">
-      <div className="grid gap-6">
+    <div className="space-y-4 p-4 max-w-2xl mx-auto">
+      <div className="grid gap-4">
         {/* Provider Selection */}
         <motion.div
           className="space-y-4 rounded-xl bg-card/50 p-6"
