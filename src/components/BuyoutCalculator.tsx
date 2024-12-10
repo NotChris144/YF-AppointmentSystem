@@ -91,7 +91,7 @@ const BuyoutCalculator: React.FC = () => {
     const monthlyAmount = parseFloat(monthlyBill) || 0;
     const months = calculateMonthsRemaining();
     const totalCost = monthlyAmount * months;
-    const totalExVAT = totalCost / (1 + VAT_RATE);
+    const totalExVAT = totalCost * (1 - VAT_RATE);
     const vatAmount = totalCost - totalExVAT;
     const customerPayment = Math.max(0, totalExVAT - BUYOUT_CONTRIBUTION);
     
