@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AlertTriangle, Edit2 } from 'lucide-react';
 import useDevice from '../hooks/useDevice';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -25,6 +25,9 @@ const BuyoutCalculator: React.FC = () => {
     const today = new Date();
     return today.toISOString().split('T')[0];
   });
+
+  const [showBreakdown, setShowBreakdown] = useState(false);
+  const [animationStep, setAnimationStep] = useState(0);
 
   const BUYOUT_CONTRIBUTION = 300; // £300 contribution
   const VAT_RATE = 0.20; // 20% VAT
@@ -105,6 +108,25 @@ const BuyoutCalculator: React.FC = () => {
 
   const breakdown = calculateBreakdown();
   const canBuyoutInFull = breakdown.customerPayment === 0;
+
+  useEffect(() => {
+    const hasRequiredFields = monthlyBill !== '' && contractLength !== null;
+    setShowBreakdown(hasRequiredFields);
+    if (hasRequiredFields) {
+      // Reset animation sequence
+      setAnimationStep(0);
+      const timer = setInterval(() => {
+        setAnimationStep(prev => {
+          if (prev >= 7) { // Total number of animated elements
+            clearInterval(timer);
+            return prev;
+          }
+          return prev + 1;
+        });
+      }, 200); // Delay between each animation
+      return () => clearInterval(timer);
+    }
+  }, [monthlyBill, contractLength]);
 
   return (
     <div className="w-full max-w-3xl mx-auto">
@@ -199,105 +221,107 @@ const BuyoutCalculator: React.FC = () => {
         </motion.div>
 
         {/* Summary */}
-        <motion.div
-          className={`p-4 sm:p-6 rounded-xl border-2 space-y-4 ${
-            canBuyoutInFull 
-              ? 'bg-green-500/5 border-green-500/20' 
-              : 'bg-yellow-500/5 border-yellow-500/20'
-          }`}
-          animate={{ opacity: 1 }}
-        >
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium">Breakdown</h3>
-          </div>
+        <AnimatePresence>
+          {showBreakdown && (
+            <motion.div
+              className={`p-4 sm:p-6 rounded-xl border-2 space-y-4 ${
+                canBuyoutInFull 
+                  ? 'bg-green-500/5 border-green-500/20' 
+                  : 'bg-yellow-500/5 border-yellow-500/20'
+              }`}
+              initial={{ opacity: 0, height: 0, y: 20 }}
+              animate={{ opacity: 1, height: "auto", y: 0 }}
+              exit={{ opacity: 0, height: 0, y: 20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium">Breakdown</h3>
+              </div>
 
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            className="space-y-4 overflow-hidden"
-          >
-            <div className="grid gap-3">
-              <motion.div 
-                className="flex justify-between items-center p-4 rounded-lg bg-black/5"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 }}
-              >
-                <span className="text-gray-500">Monthly Bill</span>
-                <span className="font-medium">£{breakdown.monthlyBill.toFixed(2)}</span>
-              </motion.div>
-              
-              <motion.div 
-                className="flex justify-between items-center p-4 rounded-lg bg-black/5"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <span className="text-gray-500">Months Remaining</span>
-                <span className="font-medium">{breakdown.monthsRemaining}</span>
-              </motion.div>
-              
-              <motion.div 
-                className="flex justify-between items-center p-4 rounded-lg bg-black/5"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                <span className="text-gray-500">Total Cost</span>
-                <span className="font-medium">£{breakdown.totalCost.toFixed(2)}</span>
-              </motion.div>
+              <motion.div className="space-y-4 overflow-hidden">
+                <div className="grid gap-3">
+                  {[
+                    {
+                      label: "Monthly Bill",
+                      value: `£${breakdown.monthlyBill.toFixed(2)}`,
+                      step: 0
+                    },
+                    {
+                      label: "Months Remaining",
+                      value: breakdown.monthsRemaining,
+                      step: 1
+                    },
+                    {
+                      label: "Total Cost",
+                      value: `£${breakdown.totalCost.toFixed(2)}`,
+                      step: 2
+                    },
+                    {
+                      label: "Total Cost - VAT",
+                      value: `£${breakdown.totalExVAT.toFixed(2)}`,
+                      step: 3
+                    },
+                    {
+                      label: "VAT Amount",
+                      value: `£${breakdown.vatAmount.toFixed(2)}`,
+                      step: 4
+                    },
+                    {
+                      label: "Our Contribution",
+                      value: `-£${breakdown.contribution.toFixed(2)}`,
+                      isGreen: true,
+                      step: 5
+                    }
+                  ].map((item, index) => (
+                    <motion.div
+                      key={item.label}
+                      className="flex justify-between items-center p-4 rounded-lg bg-black/5"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ 
+                        opacity: animationStep >= item.step ? 1 : 0,
+                        x: animationStep >= item.step ? 0 : -20
+                      }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <span className="text-gray-500">{item.label}</span>
+                      <span className={`font-medium ${item.isGreen ? 'text-green-500' : ''}`}>
+                        {item.value}
+                      </span>
+                    </motion.div>
+                  ))}
+                </div>
 
-              <motion.div 
-                className="flex justify-between items-center p-4 rounded-lg bg-black/5"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 }}
-              >
-                <span className="text-gray-500">Total Cost - VAT</span>
-                <span className="font-medium">£{breakdown.totalExVAT.toFixed(2)}</span>
+                <motion.div
+                  className="pt-6"
+                  initial={{ opacity: 0 }}
+                  animate={{ 
+                    opacity: animationStep >= 6 ? 1 : 0
+                  }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <div className="text-center">
+                    <span className="text-lg font-medium mb-2 block">Final Payment</span>
+                    <span className={`text-3xl font-bold block mb-3 ${canBuyoutInFull ? 'text-green-500' : 'text-yellow-500'}`}>
+                      £{breakdown.customerPayment.toFixed(2)}
+                    </span>
+                    <motion.p
+                      className={`text-sm ${canBuyoutInFull ? 'text-green-600/80' : 'text-yellow-600/80'}`}
+                      initial={{ opacity: 0 }}
+                      animate={{ 
+                        opacity: animationStep >= 7 ? 1 : 0
+                      }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      {canBuyoutInFull 
+                        ? 'Great news! We\'ll cover your entire buyout cost.'
+                        : 'Additional payment needed to complete your buyout.'}
+                    </motion.p>
+                  </div>
+                </motion.div>
               </motion.div>
-              
-              <motion.div 
-                className="flex justify-between items-center p-4 rounded-lg bg-black/5"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5 }}
-              >
-                <span className="text-gray-500">VAT Amount</span>
-                <span className="font-medium">£{breakdown.vatAmount.toFixed(2)}</span>
-              </motion.div>
-              
-              <motion.div 
-                className="flex justify-between items-center p-4 rounded-lg bg-black/5"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.6 }}
-              >
-                <span className="text-gray-500">Our Contribution</span>
-                <span className="font-medium text-green-500">-£{breakdown.contribution.toFixed(2)}</span>
-              </motion.div>
-            </div>
-          </motion.div>
-
-          <motion.div 
-            className="pt-6"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.7 }}
-          >
-            <div className="text-center">
-              <span className="text-lg font-medium mb-2 block">Final Payment</span>
-              <span className={`text-3xl font-bold block mb-3 ${canBuyoutInFull ? 'text-green-500' : 'text-yellow-500'}`}>
-                £{breakdown.customerPayment.toFixed(2)}
-              </span>
-              <p className={`text-sm ${canBuyoutInFull ? 'text-green-600/80' : 'text-yellow-600/80'}`}>
-                {canBuyoutInFull 
-                  ? 'Great news! We\'ll cover your entire buyout cost.'
-                  : 'Additional payment needed to complete your buyout.'}
-              </p>
-            </div>
-          </motion.div>
-        </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
