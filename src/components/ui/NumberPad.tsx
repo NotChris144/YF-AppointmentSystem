@@ -119,7 +119,8 @@ const NumberPad: React.FC<NumberPadProps> = ({
       <div className="relative mb-4">
         <div
           className={cn(
-            'w-full p-4 text-3xl font-bold text-right rounded-lg bg-white/10 backdrop-blur-sm',
+            'w-full p-4 text-3xl font-bold text-right rounded-lg bg-card/50 border border-border/50',
+            'focus:border-primary focus:ring-0',
             showError ? 'animate-shake text-red-500' : ''
           )}
           role="textbox"
@@ -135,7 +136,12 @@ const NumberPad: React.FC<NumberPadProps> = ({
           <motion.button
             key={num}
             onClick={() => handleNumberClick(num.toString())}
-            className="p-4 text-2xl font-semibold rounded-lg bg-primary/10 hover:bg-primary/20 active:bg-primary/30 transition-colors"
+            className={cn(
+              "p-4 text-2xl font-semibold rounded-lg",
+              "bg-card/50 border border-border/50",
+              "hover:bg-primary/5 hover:border-primary/20 active:bg-primary/10",
+              "transition-all duration-200"
+            )}
             variants={buttonVariants}
             whileHover="hover"
             whileTap="tap"
@@ -149,7 +155,12 @@ const NumberPad: React.FC<NumberPadProps> = ({
         {/* Bottom Row */}
         <motion.button
           onClick={() => handleNumberClick('.')}
-          className="p-4 text-2xl font-semibold rounded-lg bg-primary/10 hover:bg-primary/20 active:bg-primary/30 transition-colors"
+          className={cn(
+            "p-4 text-2xl font-semibold rounded-lg",
+            "bg-card/50 border border-border/50",
+            "hover:bg-primary/5 hover:border-primary/20 active:bg-primary/10",
+            "transition-all duration-200"
+          )}
           variants={buttonVariants}
           whileHover="hover"
           whileTap="tap"
@@ -161,7 +172,12 @@ const NumberPad: React.FC<NumberPadProps> = ({
 
         <motion.button
           onClick={() => handleNumberClick('0')}
-          className="p-4 text-2xl font-semibold rounded-lg bg-primary/10 hover:bg-primary/20 active:bg-primary/30 transition-colors"
+          className={cn(
+            "p-4 text-2xl font-semibold rounded-lg",
+            "bg-card/50 border border-border/50",
+            "hover:bg-primary/5 hover:border-primary/20 active:bg-primary/10",
+            "transition-all duration-200"
+          )}
           variants={buttonVariants}
           whileHover="hover"
           whileTap="tap"
@@ -173,7 +189,12 @@ const NumberPad: React.FC<NumberPadProps> = ({
 
         <motion.button
           onClick={handleDelete}
-          className="p-4 text-2xl font-semibold rounded-lg bg-primary/10 hover:bg-primary/20 active:bg-primary/30 transition-colors"
+          className={cn(
+            "p-4 text-2xl font-semibold rounded-lg",
+            "bg-card/50 border border-border/50",
+            "hover:bg-primary/5 hover:border-primary/20 active:bg-primary/10",
+            "transition-all duration-200"
+          )}
           variants={buttonVariants}
           whileHover="hover"
           whileTap="tap"
@@ -186,7 +207,12 @@ const NumberPad: React.FC<NumberPadProps> = ({
         {/* Clear Button - Full Width */}
         <motion.button
           onClick={handleClear}
-          className="col-span-3 p-4 text-xl font-semibold rounded-lg bg-red-500/10 hover:bg-red-500/20 active:bg-red-500/30 transition-colors text-red-500"
+          className={cn(
+            "col-span-3 p-4 text-xl font-semibold rounded-lg",
+            "bg-card/50 border border-border/50",
+            "hover:bg-red-500/5 hover:border-red-500/20 hover:text-red-500",
+            "active:bg-red-500/10 transition-all duration-200"
+          )}
           variants={buttonVariants}
           whileHover="hover"
           whileTap="tap"

@@ -174,13 +174,13 @@ const BuyoutCalculator: React.FC = () => {
                 initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 50 }}
-                className="fixed inset-x-0 bottom-0 z-50 bg-gray-900 rounded-t-2xl shadow-2xl"
+                className="fixed inset-x-0 bottom-0 z-50 bg-background/95 backdrop-blur-sm border-t border-border/50 shadow-2xl"
               >
-                <div className="flex justify-between items-center p-4 border-b border-gray-800">
+                <div className="flex justify-between items-center p-4 border-b border-border/50">
                   <h3 className="text-lg font-semibold">Enter Monthly Bill</h3>
                   <button
                     onClick={toggleBillEdit}
-                    className="p-2 hover:bg-gray-800 rounded-full transition-colors"
+                    className="p-2 hover:bg-card/50 rounded-full transition-colors"
                   >
                     <X className="w-5 h-5" />
                   </button>
