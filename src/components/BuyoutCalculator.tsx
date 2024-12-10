@@ -19,9 +19,12 @@ const BuyoutCalculator: React.FC = () => {
   const [provider, setProvider] = useState('');
   const [monthlyBill, setMonthlyBill] = useState('');
   const [isEditingBill, setIsEditingBill] = useState(false);
-  const [contractEndType, setContractEndType] = useState<'preset' | 'custom'>('preset');
-  const [contractLength, setContractLength] = useState('6');
-  const [customDate, setCustomDate] = useState('');
+  const [contractEndType, setContractEndType] = useState<'preset' | 'custom' | null>(null);
+  const [contractLength, setContractLength] = useState<string | null>(null);
+  const [customDate, setCustomDate] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
 
   const BUYOUT_CONTRIBUTION = 300; // £300 contribution
   const VAT_RATE = 0.20; // 20% VAT
@@ -34,9 +37,43 @@ const BuyoutCalculator: React.FC = () => {
     { label: isMobile ? '24M' : '24 Months', value: '24' }
   ];
 
+  const handlePresetPeriodClick = (value: string) => {
+    if (contractLength === value && contractEndType === 'preset') {
+      setContractLength(null);
+      setContractEndType(null);
+    } else {
+      setContractLength(value);
+      setContractEndType('preset');
+      // Update custom date to reflect the selected period
+      const date = new Date();
+      date.setMonth(date.getMonth() + parseInt(value));
+      setCustomDate(date.toISOString().split('T')[0]);
+    }
+  };
+
+  const handleCustomDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCustomDate(e.target.value);
+    setContractEndType('custom');
+    // Calculate and set contract length based on custom date
+    const end = new Date(e.target.value);
+    const now = new Date();
+    const months = (end.getFullYear() - now.getFullYear()) * 12 + 
+                  (end.getMonth() - now.getMonth());
+    setContractLength(Math.max(0, months).toString());
+  };
+
+  const handleProviderClick = (selectedProvider: string) => {
+    if (provider === selectedProvider) {
+      setProvider('');
+    } else {
+      setProvider(selectedProvider);
+    }
+  };
+
   const calculateMonthsRemaining = () => {
+    if (!contractEndType) return 0;
     if (contractEndType === 'preset') {
-      return parseInt(contractLength);
+      return parseInt(contractLength || '0');
     } else if (customDate) {
       const end = new Date(customDate);
       const now = new Date();
@@ -84,8 +121,8 @@ const BuyoutCalculator: React.FC = () => {
                 key={p}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => setProvider(p)}
-                className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                onClick={() => handleProviderClick(p)}
+                className={`p-4 rounded-xl border-2 transition-all ${
                   provider === p
                     ? 'border-primary bg-primary/5 shadow-lg shadow-primary/10'
                     : 'border-transparent bg-card/50 hover:border-primary/20'
@@ -122,10 +159,7 @@ const BuyoutCalculator: React.FC = () => {
                 key={period.value}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => {
-                  setContractEndType('preset');
-                  setContractLength(period.value);
-                }}
+                onClick={() => handlePresetPeriodClick(period.value)}
                 className={`p-4 rounded-xl border-2 transition-all ${
                   contractEndType === 'preset' && contractLength === period.value
                     ? 'border-primary bg-primary/5 shadow-lg shadow-primary/10'
@@ -141,11 +175,12 @@ const BuyoutCalculator: React.FC = () => {
             <input
               type="date"
               value={customDate}
-              onChange={(e) => {
-                setContractEndType('custom');
-                setCustomDate(e.target.value);
-              }}
-              className="w-full p-4 rounded-lg bg-transparent border border-border/50 focus:border-primary focus:ring-0 text-base"
+              onChange={handleCustomDateChange}
+              className={`w-full p-4 rounded-lg bg-transparent border transition-all ${
+                contractEndType === 'custom'
+                  ? 'border-primary bg-primary/5'
+                  : 'border-border/50'
+              } focus:border-primary focus:ring-0 text-base`}
               min={new Date().toISOString().split('T')[0]}
             />
           </div>
