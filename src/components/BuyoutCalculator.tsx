@@ -88,11 +88,11 @@ const BuyoutCalculator: React.FC = () => {
     const speedoRef = React.useRef<SVGSVGElement>(null);
 
     const calculateSpeedFromAngle = (angle: number) => {
-      return (angle / 180) * maxValue;
+      return ((angle + 180) / 180) * maxValue;
     };
 
     const calculateAngleFromSpeed = (speed: number) => {
-      return (speed / maxValue) * 180;
+      return (speed / maxValue) * 180 - 180;
     };
 
     const calculateSpeedFromMousePosition = (event: React.MouseEvent | MouseEvent) => {
@@ -104,18 +104,14 @@ const BuyoutCalculator: React.FC = () => {
       svgPoint.x = event.clientX;
       svgPoint.y = event.clientY;
       
-      // Transform mouse position to SVG coordinates
       const transformedPoint = svgPoint.matrixTransform(speedoRef.current.getScreenCTM()?.inverse());
       
-      // Calculate angle relative to center
       const dx = transformedPoint.x - 150;
       const dy = transformedPoint.y - 150;
-      let angle = Math.atan2(-dy, dx) * (180 / Math.PI) + 90;
+      let angle = Math.atan2(dy, dx) * (180 / Math.PI);
       
-      // Normalize angle to 0-180 range
-      if (angle < 0) angle += 360;
-      if (angle > 180) angle = 180;
-      if (angle < 0) angle = 0;
+      if (angle < -180) angle = -180;
+      if (angle > 0) angle = 0;
 
       const newSpeed = Math.round(calculateSpeedFromAngle(angle));
       onChange(Math.min(maxValue, Math.max(0, newSpeed)));
@@ -154,9 +150,8 @@ const BuyoutCalculator: React.FC = () => {
     const angle = calculateAngleFromSpeed(value);
 
     const getArcPath = (startAngle: number, endAngle: number) => {
-      // Convert angles to radians and adjust for SVG coordinate system
-      const startRad = (startAngle - 90) * (Math.PI / 180);
-      const endRad = (endAngle - 90) * (Math.PI / 180);
+      const startRad = (startAngle) * (Math.PI / 180);
+      const endRad = (endAngle) * (Math.PI / 180);
       
       const startPoint = {
         x: radius + (normalizedRadius * Math.cos(startRad)),
@@ -168,7 +163,7 @@ const BuyoutCalculator: React.FC = () => {
         y: radius + (normalizedRadius * Math.sin(endRad))
       };
 
-      const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+      const largeArcFlag = Math.abs(endAngle - startAngle) <= 180 ? "0" : "1";
       return `M ${startPoint.x} ${startPoint.y} A ${normalizedRadius} ${normalizedRadius} 0 ${largeArcFlag} 1 ${endPoint.x} ${endPoint.y}`;
     };
 
@@ -197,7 +192,7 @@ const BuyoutCalculator: React.FC = () => {
 
               {/* Speed Markers */}
               {[0, 200, 400, 600, 800, 1000].map((speed) => {
-                const markerAngle = (speed / maxValue) * 180 - 90;
+                const markerAngle = calculateAngleFromSpeed(speed);
                 const markerLength = speed % 400 === 0 ? 15 : 10;
                 const markerStart = normalizedRadius - markerLength;
                 const markerEnd = normalizedRadius + 5;
@@ -210,7 +205,6 @@ const BuyoutCalculator: React.FC = () => {
                 const x2 = radius + markerEnd * cos;
                 const y2 = radius + markerEnd * sin;
                 
-                // Text position
                 const textDistance = normalizedRadius - 25;
                 const textX = radius + textDistance * cos;
                 const textY = radius + textDistance * sin;
@@ -233,7 +227,7 @@ const BuyoutCalculator: React.FC = () => {
                         fontSize="12"
                         textAnchor="middle"
                         dominantBaseline="middle"
-                        transform={`rotate(${markerAngle + 90}, ${textX}, ${textY})`}
+                        transform={`rotate(${markerAngle}, ${textX}, ${textY})`}
                       >
                         {speed}
                       </text>
@@ -244,7 +238,7 @@ const BuyoutCalculator: React.FC = () => {
 
               {/* Background Arc */}
               <path
-                d={getArcPath(0, 180)}
+                d={getArcPath(-180, 0)}
                 fill="none"
                 stroke="rgba(31, 41, 55, 0.3)"
                 strokeWidth={strokeWidth}
@@ -253,7 +247,7 @@ const BuyoutCalculator: React.FC = () => {
 
               {/* Progress Arc */}
               <path
-                d={getArcPath(0, angle)}
+                d={getArcPath(-180, angle)}
                 fill="none"
                 stroke="url(#speedGradient)"
                 strokeWidth={strokeWidth}
