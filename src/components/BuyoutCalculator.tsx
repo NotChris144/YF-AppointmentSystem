@@ -4,7 +4,7 @@ import useDevice from '../hooks/useDevice';
 import { motion, AnimatePresence } from 'framer-motion';
 import NumberPad from './ui/NumberPad';
 import NumberInput from './ui/NumberInput';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/utils';
 
 interface BuyoutBreakdown {
   monthlyBill: number;
