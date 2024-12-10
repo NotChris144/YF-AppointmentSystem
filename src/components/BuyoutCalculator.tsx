@@ -140,11 +140,23 @@ const BuyoutCalculator: React.FC = () => {
           animate={{ opacity: provider ? 1 : 0.8 }}
         >
           <h3 className="text-lg font-medium mb-4">Monthly Bill</h3>
-          <NumberInput
-            value={monthlyBill}
-            onChange={setMonthlyBill}
-            max={1000}
-          />
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <span className="text-gray-500">£</span>
+            </div>
+            <input
+              type="text"
+              value={monthlyBill}
+              onChange={(e) => {
+                const value = e.target.value.replace(/[^0-9.]/g, '');
+                if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
+                  setMonthlyBill(value);
+                }
+              }}
+              placeholder="0.00"
+              className="w-full p-3 pl-7 rounded-lg bg-transparent border border-border/50 focus:border-primary focus:ring-0 text-base"
+            />
+          </div>
         </motion.div>
 
         {/* Contract Length */}
