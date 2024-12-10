@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, Link } from 'react-router-dom';
 import { Navigation } from 'lucide-react';
 import Navbar from './Navbar';
 import { useThemeStore } from '../store/themeStore';

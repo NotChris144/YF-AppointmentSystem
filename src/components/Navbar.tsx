@@ -21,6 +21,16 @@ const Navbar: React.FC = () => {
           </Link>
           
           <div className="flex items-center space-x-4">
+            <Link
+              to="/speed-test"
+              className={`${
+                location.pathname === '/speed-test'
+                  ? 'bg-gray-900 text-white'
+                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+              } px-3 py-2 rounded-md text-sm font-medium`}
+            >
+              Speed Test
+            </Link>
             <button
               onClick={toggleTheme}
               className="p-3 rounded-md touch-manipulation hover:bg-primary/5"
