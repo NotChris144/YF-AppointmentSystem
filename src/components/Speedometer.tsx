@@ -23,20 +23,20 @@ const Speedometer: React.FC<SpeedometerProps> = ({
   const normalizedRadius = radius - 10;
   const strokeWidth = 20;
 
-  // Calculate angle from speed value
+  // Calculate angle from speed value (0 to 180 for top half)
   const calculateAngleFromSpeed = (speed: number) => {
-    return -180 + (speed / maxValue) * 180;
+    return 180 - (speed / maxValue) * 180;
   };
 
   // Calculate speed from angle
   const calculateSpeedFromAngle = (angle: number) => {
-    return ((angle + 180) / 180) * maxValue;
+    return ((180 - angle) / 180) * maxValue;
   };
 
   // Current angle based on value
   const angle = calculateAngleFromSpeed(value);
 
-  // Get arc path
+  // Get arc path for top half
   const getArcPath = (startAngle: number, endAngle: number) => {
     const start = polarToCartesian(startAngle);
     const end = polarToCartesian(endAngle);
@@ -44,13 +44,13 @@ const Speedometer: React.FC<SpeedometerProps> = ({
     
     return [
       "M", start.x, start.y,
-      "A", normalizedRadius, normalizedRadius, 0, largeArcFlag, 1, end.x, end.y
+      "A", normalizedRadius, normalizedRadius, 0, largeArcFlag, 0, end.x, end.y
     ].join(" ");
   };
 
-  // Convert polar coordinates to cartesian
+  // Convert polar coordinates to cartesian (adjusted for top half)
   const polarToCartesian = (angle: number) => {
-    const angleInRadians = (angle) * Math.PI / 180;
+    const angleInRadians = (angle - 180) * Math.PI / 180;
     return {
       x: radius + (normalizedRadius * Math.cos(angleInRadians)),
       y: radius + (normalizedRadius * Math.sin(angleInRadians))
@@ -69,15 +69,15 @@ const Speedometer: React.FC<SpeedometerProps> = ({
 
     const svgRect = speedoRef.current.getBoundingClientRect();
     const svgCenterX = svgRect.left + svgRect.width / 2;
-    const svgCenterY = svgRect.top + svgRect.height / 2;
+    const svgCenterY = svgRect.top + svgRect.height;
 
     const angle = Math.atan2(
-      e.clientY - svgCenterY,
+      svgCenterY - e.clientY,
       e.clientX - svgCenterX
     ) * 180 / Math.PI;
 
-    // Clamp angle between -180 and 0
-    const clampedAngle = Math.max(-180, Math.min(0, angle));
+    // Clamp angle between 0 and 180 (top half)
+    const clampedAngle = Math.max(0, Math.min(180, angle));
     const newSpeed = calculateSpeedFromAngle(clampedAngle);
     onChange(Math.round(newSpeed));
   };
@@ -120,8 +120,8 @@ const Speedometer: React.FC<SpeedometerProps> = ({
                 const markerStart = normalizedRadius - markerLength;
                 const markerEnd = normalizedRadius + 5;
                 
-                const cos = Math.cos(markerAngle * Math.PI / 180);
-                const sin = Math.sin(markerAngle * Math.PI / 180);
+                const cos = Math.cos((markerAngle - 180) * Math.PI / 180);
+                const sin = Math.sin((markerAngle - 180) * Math.PI / 180);
                 
                 const x1 = radius + markerStart * cos;
                 const y1 = radius + markerStart * sin;
@@ -161,7 +161,7 @@ const Speedometer: React.FC<SpeedometerProps> = ({
 
               {/* Background Arc */}
               <path
-                d={getArcPath(-180, 0)}
+                d={getArcPath(0, 180)}
                 fill="none"
                 stroke="rgba(31, 41, 55, 0.3)"
                 strokeWidth={strokeWidth}
@@ -170,7 +170,7 @@ const Speedometer: React.FC<SpeedometerProps> = ({
 
               {/* Progress Arc */}
               <path
-                d={getArcPath(-180, angle)}
+                d={getArcPath(angle, 180)}
                 fill="none"
                 stroke="url(#speedGradient)"
                 strokeWidth={strokeWidth}
@@ -184,7 +184,7 @@ const Speedometer: React.FC<SpeedometerProps> = ({
         </div>
 
         {/* Speed Value */}
-        <div className="absolute bottom-[25%] left-1/2 -translate-x-1/2 transform">
+        <div className="absolute top-[75%] left-1/2 -translate-x-1/2 transform">
           {isEditing ? (
             <input
               type="number"
