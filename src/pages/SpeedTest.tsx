@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { Speedometer } from '../components/Speedometer';
+import React from 'react';
+import Speedometer from '../components/Speedometer';
 
 const SpeedTest: React.FC = () => {
-  const [downloadSpeed, setDownloadSpeed] = useState(0);
-  const [uploadSpeed, setUploadSpeed] = useState(0);
+  const [downloadSpeed, setDownloadSpeed] = React.useState(0);
+  const [uploadSpeed, setUploadSpeed] = React.useState(0);
 
   return (
     <div className="container mx-auto p-4">
