@@ -193,111 +193,114 @@ const BuyoutCalculator: React.FC = () => {
           <span className="text-sm font-medium">{type === 'download' ? 'Download' : 'Upload'}</span>
         </div>
 
-        <div className="relative w-full pt-[50%]">
-          <div className="absolute inset-0">
-            <svg
-              ref={speedoRef}
-              viewBox={`0 0 ${radius * 2} ${radius * 2}`}
-              className="w-full h-full cursor-pointer"
-              onMouseDown={handleMouseDown}
-            >
-              <defs>
-                <linearGradient id="speedGradient" x1="0%" y1="0%" x2="100%" y1="0%">
-                  <stop offset="0%" stopColor={type === 'download' ? '#2dd4bf' : '#06b6d4'} />
-                  <stop offset="100%" stopColor={type === 'download' ? '#06b6d4' : '#2dd4bf'} />
-                </linearGradient>
-              </defs>
+        <div className="relative w-full">
+          {/* Speedometer Container */}
+          <div className="relative w-full pt-[50%]">
+            <div className="absolute inset-0">
+              <svg
+                ref={speedoRef}
+                viewBox={`0 0 ${radius * 2} ${radius * 2}`}
+                className="w-full h-full cursor-pointer"
+                onMouseDown={handleMouseDown}
+              >
+                <defs>
+                  <linearGradient id="speedGradient" x1="0%" y1="0%" x2="100%" y1="0%">
+                    <stop offset="0%" stopColor={type === 'download' ? '#2dd4bf' : '#06b6d4'} />
+                    <stop offset="100%" stopColor={type === 'download' ? '#06b6d4' : '#2dd4bf'} />
+                  </linearGradient>
+                </defs>
 
-              {/* Speed Markers */}
-              {[0, 200, 400, 600, 800, 1000].map((speed) => {
-                const markerAngle = calculateAngleFromSpeed(speed);
-                const markerLength = speed % 400 === 0 ? 15 : 10;
-                const markerStart = normalizedRadius - markerLength;
-                const markerEnd = normalizedRadius + 5;
-                
-                const cos = Math.cos(markerAngle * Math.PI / 180);
-                const sin = Math.sin(markerAngle * Math.PI / 180);
-                
-                const x1 = radius + markerStart * cos;
-                const y1 = radius + markerStart * sin;
-                const x2 = radius + markerEnd * cos;
-                const y2 = radius + markerEnd * sin;
-                
-                const textDistance = normalizedRadius - 25;
-                const textX = radius + textDistance * cos;
-                const textY = radius + textDistance * sin;
+                {/* Speed Markers */}
+                {[0, 200, 400, 600, 800, 1000].map((speed) => {
+                  const markerAngle = calculateAngleFromSpeed(speed);
+                  const markerLength = speed % 400 === 0 ? 15 : 10;
+                  const markerStart = normalizedRadius - markerLength;
+                  const markerEnd = normalizedRadius + 5;
+                  
+                  const cos = Math.cos(markerAngle * Math.PI / 180);
+                  const sin = Math.sin(markerAngle * Math.PI / 180);
+                  
+                  const x1 = radius + markerStart * cos;
+                  const y1 = radius + markerStart * sin;
+                  const x2 = radius + markerEnd * cos;
+                  const y2 = radius + markerEnd * sin;
+                  
+                  const textDistance = normalizedRadius - 25;
+                  const textX = radius + textDistance * cos;
+                  const textY = radius + textDistance * sin;
 
-                return (
-                  <g key={speed}>
-                    <line
-                      x1={x1}
-                      y1={y1}
-                      x2={x2}
-                      y2={y2}
-                      stroke="rgba(55, 65, 81, 0.3)"
-                      strokeWidth="2"
-                    />
-                    {speed % 200 === 0 && (
-                      <text
-                        x={textX}
-                        y={textY}
-                        fill="rgba(156, 163, 175, 0.5)"
-                        fontSize="12"
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                        style={{ userSelect: 'none' }}
-                      >
-                        {speed}
-                      </text>
-                    )}
-                  </g>
-                );
-              })}
+                  return (
+                    <g key={speed}>
+                      <line
+                        x1={x1}
+                        y1={y1}
+                        x2={x2}
+                        y2={y2}
+                        stroke="rgba(55, 65, 81, 0.3)"
+                        strokeWidth="2"
+                      />
+                      {speed % 200 === 0 && (
+                        <text
+                          x={textX}
+                          y={textY}
+                          fill="rgba(156, 163, 175, 0.5)"
+                          fontSize="12"
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                          style={{ userSelect: 'none' }}
+                        >
+                          {speed}
+                        </text>
+                      )}
+                    </g>
+                  );
+                })}
 
-              {/* Background Arc */}
-              <path
-                d={getArcPath(-180, 0)}
-                fill="none"
-                stroke="rgba(31, 41, 55, 0.3)"
-                strokeWidth={strokeWidth}
-                strokeLinecap="round"
-              />
+                {/* Background Arc */}
+                <path
+                  d={getArcPath(-180, 0)}
+                  fill="none"
+                  stroke="rgba(31, 41, 55, 0.3)"
+                  strokeWidth={strokeWidth}
+                  strokeLinecap="round"
+                />
 
-              {/* Progress Arc */}
-              <path
-                d={getArcPath(-180, angle)}
-                fill="none"
-                stroke="url(#speedGradient)"
-                strokeWidth={strokeWidth}
-                strokeLinecap="round"
-                style={{
-                  transition: isDragging ? 'none' : 'all 0.3s ease-out'
-                }}
-              />
-            </svg>
-          </div>
-        </div>
-
-        {/* Speed Value */}
-        <div className="mt-2 text-center">
-          {isEditing ? (
-            <input
-              type="number"
-              value={value}
-              onChange={(e) => onChange(Math.min(maxValue, Math.max(0, Number(e.target.value))))}
-              onBlur={() => setIsEditing(false)}
-              className="w-24 text-4xl font-bold text-cyan-400 bg-transparent border-none text-center focus:ring-0"
-              autoFocus
-            />
-          ) : (
-            <div 
-              className="text-4xl font-bold text-cyan-400 cursor-pointer"
-              onClick={() => setIsEditing(true)}
-            >
-              {value.toFixed(0)}
-              <span className="text-sm font-normal text-gray-400 ml-1">Mbps</span>
+                {/* Progress Arc */}
+                <path
+                  d={getArcPath(-180, angle)}
+                  fill="none"
+                  stroke="url(#speedGradient)"
+                  strokeWidth={strokeWidth}
+                  strokeLinecap="round"
+                  style={{
+                    transition: isDragging ? 'none' : 'all 0.3s ease-out'
+                  }}
+                />
+              </svg>
             </div>
-          )}
+          </div>
+
+          {/* Speed Value - Positioned relative to speedometer */}
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 transform translate-y-2">
+            {isEditing ? (
+              <input
+                type="number"
+                value={value}
+                onChange={(e) => onChange(Math.min(maxValue, Math.max(0, Number(e.target.value))))}
+                onBlur={() => setIsEditing(false)}
+                className="w-24 text-4xl font-bold text-cyan-400 bg-transparent border-none text-center focus:ring-0"
+                autoFocus
+              />
+            ) : (
+              <div 
+                className="text-4xl font-bold text-cyan-400 cursor-pointer"
+                onClick={() => setIsEditing(true)}
+              >
+                {value.toFixed(0)}
+                <span className="text-sm font-normal text-gray-400 ml-1">Mbps</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
