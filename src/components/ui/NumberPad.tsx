@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Delete, X } from 'lucide-react';
+import { Delete, X, Check } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 interface NumberPadProps {
   value: string;
   onChange: (value: string) => void;
   onBlur?: () => void;
+  onConfirm?: () => void;
   maxValue?: number;
   minValue?: number;
   className?: string;
@@ -18,6 +19,7 @@ const NumberPad: React.FC<NumberPadProps> = ({
   value,
   onChange,
   onBlur,
+  onConfirm,
   maxValue = 999999.99,
   minValue = 0,
   className,
@@ -204,22 +206,24 @@ const NumberPad: React.FC<NumberPadProps> = ({
           <Delete className="w-6 h-6 mx-auto" />
         </motion.button>
 
-        {/* Clear Button - Full Width */}
+        {/* Confirm Button - Full Width */}
         <motion.button
-          onClick={handleClear}
+          onClick={onConfirm}
           className={cn(
             "col-span-3 p-4 text-xl font-semibold rounded-lg",
-            "bg-card/50 border border-border/50",
-            "hover:bg-red-500/5 hover:border-red-500/20 hover:text-red-500",
-            "active:bg-red-500/10 transition-all duration-200"
+            "bg-primary/10 border border-primary/20",
+            "hover:bg-primary/20 hover:border-primary/30",
+            "active:bg-primary/30 transition-all duration-200",
+            "text-primary shadow-sm shadow-primary/10",
+            "flex items-center justify-center"
           )}
           variants={buttonVariants}
           whileHover="hover"
           whileTap="tap"
           disabled={disabled}
-          aria-label="Clear"
+          aria-label="Confirm"
         >
-          <X className="w-6 h-6 mx-auto" />
+          <Check className="w-6 h-6 transition-transform hover:scale-110" />
         </motion.button>
       </div>
     </div>

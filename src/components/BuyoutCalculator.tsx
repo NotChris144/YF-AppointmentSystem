@@ -192,6 +192,7 @@ const BuyoutCalculator: React.FC = () => {
                   maxValue={999.99}
                   minValue={0}
                   prefix="£"
+                  onConfirm={toggleBillEdit}
                 />
               </motion.div>
             </>
