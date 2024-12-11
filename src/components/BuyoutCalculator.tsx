@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { AlertTriangle, Edit2, X } from 'lucide-react';
+import { AlertTriangle, Edit2, X, ArrowRight } from 'lucide-react';
 import useDevice from '../hooks/useDevice';
 import { motion, AnimatePresence } from 'framer-motion';
 import NumberPad from './ui/NumberPad';
 import NumberInput from './ui/NumberInput';
 import { cn } from '../lib/utils';
+import { usePriceStore } from '../store/priceStore';
+import { Link } from 'react-router-dom';
 
 interface BuyoutBreakdown {
   monthlyBill: number;
@@ -19,7 +21,7 @@ interface BuyoutBreakdown {
 const BuyoutCalculator: React.FC = () => {
   const { isMobile } = useDevice();
   const [provider, setProvider] = useState('');
-  const [monthlyBill, setMonthlyBill] = useState('0');
+  const { monthlyPrice: monthlyBill, setMonthlyPrice: setMonthlyBill } = usePriceStore();
   const [isEditingBill, setIsEditingBill] = useState(false);
   const [contractEndType, setContractEndType] = useState<'preset' | 'custom' | null>(null);
   const [contractLength, setContractLength] = useState<string | null>(null);
@@ -115,8 +117,24 @@ const BuyoutCalculator: React.FC = () => {
     setMonthlyBill(value);
   };
 
-  const toggleBillEdit = () => {
-    setIsEditingBill(!isEditingBill);
+  const handleConfirmBill = (value: string) => {
+    setMonthlyBill(value);
+    setIsEditingBill(false);
+    setShowBreakdown(true);
+    setAnimationStep(1);
+  };
+
+  const handleEditBill = () => {
+    setIsEditingBill(true);
+    setShowBreakdown(false);
+    setAnimationStep(0);
+  };
+
+  const handleClearBill = () => {
+    setMonthlyBill('');
+    setIsEditingBill(false);
+    setShowBreakdown(false);
+    setAnimationStep(0);
   };
 
   useEffect(() => {
@@ -127,7 +145,7 @@ const BuyoutCalculator: React.FC = () => {
       setAnimationStep(0);
       const timer = setInterval(() => {
         setAnimationStep(prev => {
-          if (prev >= 7) { // Total number of animated elements
+          if (prev >= 8) { // Total number of animated elements
             clearInterval(timer);
             return prev;
           }
@@ -147,14 +165,29 @@ const BuyoutCalculator: React.FC = () => {
             "w-full p-4 rounded-lg bg-white/5 backdrop-blur-sm cursor-pointer hover:bg-white/10 transition-colors",
             "flex items-center justify-between"
           )}
-          onClick={toggleBillEdit}
+          onClick={() => !isEditingBill && setIsEditingBill(true)}
         >
           <div>
             <label className="text-sm text-gray-400">Monthly Bill</label>
-            <div className="text-2xl font-bold">£{parseFloat(monthlyBill).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            <div className="text-2xl font-bold">
+              £{monthlyBill ? parseFloat(monthlyBill).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
+            </div>
           </div>
           <Edit2 className="w-5 h-5 text-gray-400" />
         </div>
+
+        {monthlyBill && !isEditingBill && (
+          <Link 
+            to="/price-comparison"
+            className={cn(
+              "mt-2 text-sm font-medium inline-flex items-center gap-1",
+              "text-primary hover:text-primary/80 transition-colors"
+            )}
+          >
+            Compare Packages
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        )}
 
         {/* Number Pad Modal */}
         <AnimatePresence>
@@ -166,7 +199,7 @@ const BuyoutCalculator: React.FC = () => {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
-                onClick={toggleBillEdit}
+                onClick={() => setIsEditingBill(false)}
               />
 
               {/* Modal */}
@@ -179,7 +212,7 @@ const BuyoutCalculator: React.FC = () => {
                 <div className="flex justify-between items-center p-4 border-b border-border/50">
                   <h3 className="text-lg font-semibold">Enter Monthly Bill</h3>
                   <button
-                    onClick={toggleBillEdit}
+                    onClick={() => setIsEditingBill(false)}
                     className="p-2 hover:bg-card/50 rounded-full transition-colors"
                   >
                     <X className="w-5 h-5" />
@@ -188,11 +221,15 @@ const BuyoutCalculator: React.FC = () => {
 
                 <NumberPad
                   value={monthlyBill}
-                  onChange={handleBillChange}
+                  onChange={setMonthlyBill}
                   maxValue={999.99}
                   minValue={0}
                   prefix="£"
-                  onConfirm={toggleBillEdit}
+                  onConfirm={() => {
+                    setIsEditingBill(false);
+                    setShowBreakdown(true);
+                    setAnimationStep(1);
+                  }}
                 />
               </motion.div>
             </>
@@ -361,6 +398,27 @@ const BuyoutCalculator: React.FC = () => {
                       : 'Additional payment needed to complete your buyout.'}
                   </motion.p>
                 </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ 
+                  opacity: animationStep >= 8 ? 1 : 0
+                }}
+                transition={{ duration: 0.3 }}
+              >
+                <Link 
+                  to="/price-comparison"
+                  className={cn(
+                    "inline-block mt-4 px-4 py-2 rounded-lg",
+                    "bg-primary/10 border border-primary/20",
+                    "hover:bg-primary/20 hover:border-primary/30",
+                    "text-primary text-sm font-medium",
+                    "transition-all duration-200"
+                  )}
+                >
+                  View Our Packages
+                </Link>
               </motion.div>
             </motion.div>
           </motion.div>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { cn } from '../lib/utils';
 import { Home, Wrench, Sun, Moon } from 'lucide-react';
 import { useThemeStore } from '../store/themeStore';
 
@@ -7,29 +8,59 @@ const Navbar: React.FC = () => {
   const location = useLocation();
   const { isDark, toggleTheme } = useThemeStore();
 
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
+
   return (
-    <nav className="bg-card border-b border-border sticky top-0 z-50 safe-area-inset-top">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-14 sm:h-16">
-          <Link 
-            to="/" 
-            className="flex items-center space-x-2 touch-manipulation"
-            aria-label="Home"
-          >
+    <nav className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 items-center">
+        <div className="mr-4 hidden md:flex">
+          <Link to="/" className="mr-6 flex items-center space-x-2">
             <Wrench className="w-6 h-6 text-primary" />
-            <span className="font-bold text-lg hidden sm:inline">Sales Tools</span>
+            <span className="hidden font-bold sm:inline-block">
+              Sales Tools
+            </span>
           </Link>
-          
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-6 text-sm font-medium">
             <Link
-              to="/speed-test"
-              className={`${
-                location.pathname === '/speed-test'
-                  ? 'bg-gray-900 text-white'
-                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-              } px-3 py-2 rounded-md text-sm font-medium`}
+              to="/price-comparison"
+              className={cn(
+                "transition-colors hover:text-foreground/80",
+                isActive('/price-comparison') ? "text-foreground" : "text-foreground/60"
+              )}
             >
-              Speed Test
+              Price Comparison
+            </Link>
+            <button
+              onClick={toggleTheme}
+              className="p-3 rounded-md touch-manipulation hover:bg-primary/5"
+              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {isDark ? (
+                <Sun className="w-5 h-5" />
+              ) : (
+                <Moon className="w-5 h-5" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Menu */}
+        <div className="flex md:hidden">
+          <Link to="/" className="mr-6 flex items-center space-x-2">
+            <Wrench className="w-6 h-6 text-primary" />
+            <span className="font-bold">ST</span>
+          </Link>
+          <div className="flex items-center space-x-4 text-sm font-medium">
+            <Link
+              to="/price-comparison"
+              className={cn(
+                "transition-colors hover:text-foreground/80",
+                isActive('/price-comparison') ? "text-foreground" : "text-foreground/60"
+              )}
+            >
+              Prices
             </Link>
             <button
               onClick={toggleTheme}
