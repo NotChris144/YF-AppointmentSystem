@@ -36,10 +36,11 @@ const RouterModal: React.FC<RouterModalProps> = ({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <div className="bg-background border border-border/50 rounded-xl shadow-2xl p-8">
+      <div className="bg-background border border-border/50 rounded-xl shadow-2xl p-8 relative">
+        {/* Top close button */}
         <button
           onClick={onClose}
-          className="absolute -top-2 -right-2 p-2 rounded-full bg-background border border-border/50 hover:bg-card/50 transition-colors"
+          className="absolute -top-2 -right-2 p-2 rounded-full bg-background border border-border/50 hover:bg-card/50 transition-colors md:flex hidden"
         >
           <X className="w-5 h-5" />
         </button>
@@ -125,6 +126,15 @@ const RouterModal: React.FC<RouterModalProps> = ({
             )}
           </div>
         </div>
+
+        {/* Bottom close button for mobile */}
+        <button
+          onClick={onClose}
+          className="w-full mt-6 p-4 rounded-lg bg-card/50 hover:bg-primary/5 transition-colors border border-border/50 md:hidden flex items-center justify-center gap-2 touch-manipulation"
+        >
+          <X className="w-5 h-5" />
+          <span className="font-medium">Close</span>
+        </button>
       </div>
     </Modal>
   );
