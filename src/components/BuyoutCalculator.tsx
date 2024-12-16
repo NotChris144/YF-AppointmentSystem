@@ -35,8 +35,10 @@ const BuyoutCalculator: React.FC = () => {
 
   const BUYOUT_CONTRIBUTION = 300; // £300 contribution
   const VAT_RATE = 0.20; // 20% VAT
+  const removeVAT = (amount: number) => amount / (1 + VAT_RATE);
+  const addVAT = (amount: number) => amount * (1 + VAT_RATE);
 
-  const providers = ['BT', 'Sky', 'TalkTalk', 'Virgin Media', 'Vodafone', 'Other'];
+  const providers = ['BT', 'Sky', 'TalkTalk', 'Virgin Media', 'Vodafone', 'Now', 'Plusnet', 'EE', 'Other'];
   const presetPeriods = [
     { label: isMobile ? '6M' : '6 Months', value: '6' },
     { label: isMobile ? '12M' : '12 Months', value: '12' },
@@ -95,17 +97,97 @@ const BuyoutCalculator: React.FC = () => {
     const monthlyAmount = parseFloat(monthlyBill) || 0;
     const months = calculateMonthsRemaining();
     const totalCost = monthlyAmount * months;
-    const totalExVAT = totalCost * (1 - VAT_RATE);
-    const vatAmount = totalCost - totalExVAT;
-    const customerPayment = Math.max(0, totalExVAT - BUYOUT_CONTRIBUTION);
+    let buyoutAmount = 0;
+
+    switch (provider.toUpperCase()) {
+      case 'SKY': {
+        const monthlyCostAfterVAT = monthlyAmount * (1 - VAT_RATE);
+        const savingsCost = monthlyCostAfterVAT * 0.59;
+        const adjustedMonthlyCost = (monthlyCostAfterVAT - savingsCost) * months;
+        buyoutAmount = adjustedMonthlyCost * 1.81;
+        break;
+      }
+      case 'VODAFONE': {
+        const totalCost = monthlyAmount * months;
+        const totalCostAfterVAT = totalCost * (1 - VAT_RATE);
+        const savingsCost = 14 * months;
+        const earlyPaymentDiscount = (totalCostAfterVAT - savingsCost) * 0.01;
+        buyoutAmount = (totalCostAfterVAT - savingsCost - earlyPaymentDiscount) * (1 + VAT_RATE);
+        break;
+      }
+      case 'EE': {
+        // Step 1: Deduct VAT from the monthly cost (after applying the monthly discount)
+        const monthlyCostAfterDiscount = monthlyAmount - 11;
+        const monthlyCostAfterVAT = monthlyCostAfterDiscount * (1 - VAT_RATE);
+        
+        // Step 2: Deduct the costs saved (62% of monthlyCostAfterVAT)
+        const savingsCost = monthlyCostAfterVAT * 0.62;
+        let adjustedMonthlyCost = monthlyCostAfterVAT - savingsCost;
+        
+        // Check if adjustedMonthlyCost is negative, and set it to 0 if it is
+        adjustedMonthlyCost = Math.max(0, adjustedMonthlyCost);
+        
+        // Step 3: Deduct 4% for early receipt
+        const adjustedMonthlyCostAfterDiscount = adjustedMonthlyCost * (1 - 0.04);
+        
+        // Step 4: Multiply by the remaining months
+        const totalCost = adjustedMonthlyCostAfterDiscount * months;
+        
+        // Step 5: Add VAT to get the Early Cancellation Charge
+        buyoutAmount = totalCost * (1 + VAT_RATE);
+        break;
+      }
+      case 'PLUSNET': {
+        const monthlyCostAfterVAT = monthlyAmount * (1 - VAT_RATE);
+        const savingsCostPerMonth = 12;  // savings cost per month
+        const adjustedMonthlyCost = monthlyCostAfterVAT - savingsCostPerMonth;
+        const earlyRepaymentDiscount = adjustedMonthlyCost * 0.99;  // deducting 1% for early repayment
+        const fullMonthsCharge = earlyRepaymentDiscount * months;
+        const daysInMonth = 30;  // assuming all months have 30 days for simplicity
+        const remainingDaysCharge = (earlyRepaymentDiscount / daysInMonth) * 20;  // 20 remaining days
+        const totalEtcBeforeVat = fullMonthsCharge + remainingDaysCharge;
+        buyoutAmount = totalEtcBeforeVat * (1 + VAT_RATE);  // adding VAT back
+        break;
+      }
+      case 'BT': {
+        const totalCost = monthlyAmount * months;
+        const totalCostAfterVAT = totalCost * (1 - VAT_RATE);
+        const savingsCost = 15 * months;
+        const earlyPaymentDiscount = (totalCostAfterVAT - savingsCost) * 0.01;
+        buyoutAmount = (totalCostAfterVAT - savingsCost - earlyPaymentDiscount) * (1 + VAT_RATE);
+        break;
+      }
+      case 'NOW': {
+        const monthlyCostAfterVAT = monthlyAmount * (1 - VAT_RATE);
+        const businessCostAndDiscount = (monthlyCostAfterVAT * 0.42) * months;
+        buyoutAmount = businessCostAndDiscount;
+        break;
+      }
+      case 'VIRGIN MEDIA': {
+        const etfPercentage = 0.90;
+        buyoutAmount = monthlyAmount * months * etfPercentage;
+        break;
+      }
+      default: {
+        // Default calculation for other providers
+        const monthlyCostAfterVAT = monthlyAmount * (1 - VAT_RATE);
+        const savingsCost = monthlyCostAfterVAT * 0.75;  // Using 0.75 as the average percentage difference
+        const adjustedMonthlyCost = monthlyCostAfterVAT - savingsCost;
+        const earlyRepaymentDiscount = adjustedMonthlyCost * 0.01;  // 1% discount for early repayment
+        const totalCostBeforeVAT = (adjustedMonthlyCost - earlyRepaymentDiscount) * months;
+        buyoutAmount = totalCostBeforeVAT * (1 + VAT_RATE);
+      }
+    }
+
+    const customerPayment = Math.max(0, buyoutAmount - BUYOUT_CONTRIBUTION);
     
     return {
       monthlyBill: monthlyAmount,
       monthsRemaining: months,
       totalCost,
-      totalExVAT,
-      vatAmount,
-      contribution: Math.min(BUYOUT_CONTRIBUTION, totalExVAT),
+      totalExVAT: buyoutAmount,
+      vatAmount: totalCost - buyoutAmount,
+      contribution: Math.min(BUYOUT_CONTRIBUTION, buyoutAmount),
       customerPayment
     };
   };
