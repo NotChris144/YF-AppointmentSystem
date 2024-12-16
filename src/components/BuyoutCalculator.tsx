@@ -3,7 +3,6 @@ import { AlertTriangle, Edit2, X, ArrowRight } from 'lucide-react';
 import useDevice from '../hooks/useDevice';
 import { motion, AnimatePresence } from 'framer-motion';
 import NumberPad from './ui/NumberPad';
-import NumberInput from './ui/NumberInput';
 import { cn } from '../lib/utils';
 import { usePriceStore } from '../store/priceStore';
 import { Link } from 'react-router-dom';
@@ -46,6 +45,27 @@ const BuyoutCalculator: React.FC = () => {
     { label: isMobile ? '24M' : '24 Months', value: '24' }
   ];
 
+  const areInputsComplete = () => {
+    return monthlyBill && provider && (contractLength || customDate);
+  };
+
+  const handleBillChange = (value: string) => {
+    setMonthlyBill(value);
+  };
+
+  const handleBillSubmit = (value: string) => {
+    setMonthlyBill(value);
+    setIsEditingBill(false);
+  };
+
+  const handleProviderClick = (selectedProvider: string) => {
+    if (provider === selectedProvider) {
+      setProvider('');
+    } else {
+      setProvider(selectedProvider);
+    }
+  };
+
   const handlePresetPeriodClick = (value: string) => {
     if (contractLength === value && contractEndType === 'preset') {
       setContractLength(null);
@@ -57,27 +77,78 @@ const BuyoutCalculator: React.FC = () => {
       const date = new Date();
       date.setMonth(date.getMonth() + parseInt(value));
       setCustomDate(date.toISOString().split('T')[0]);
+      
+      // Set showBreakdown first
+      setShowBreakdown(true);
+      
+      // Wait for the breakdown section to be rendered
+      setTimeout(() => {
+        const breakdownSection = document.getElementById('breakdown-section');
+        if (breakdownSection) {
+          breakdownSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 200); // Increased timeout to ensure rendering is complete
     }
   };
 
-  const handleCustomDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCustomDate(e.target.value);
+  const handleContractLengthChange = (value: string) => {
+    setContractLength(value);
+    // Scroll to breakdown section
+    const breakdownSection = document.getElementById('breakdown-section');
+    if (breakdownSection) {
+      setTimeout(() => {
+        breakdownSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  };
+
+  const handleCustomDateChange = (date: string) => {
+    setCustomDate(date);
     setContractEndType('custom');
-    // Calculate and set contract length based on custom date
-    const end = new Date(e.target.value);
-    const now = new Date();
-    const months = (end.getFullYear() - now.getFullYear()) * 12 + 
-                  (end.getMonth() - now.getMonth());
-    setContractLength(Math.max(0, months).toString());
+    const months = calculateMonthsFromDate(date);
+    setContractLength(months.toString());
+    
+    // Set showBreakdown first
+    setShowBreakdown(true);
+    
+    // Wait for the breakdown section to be rendered
+    setTimeout(() => {
+      const breakdownSection = document.getElementById('breakdown-section');
+      if (breakdownSection) {
+        breakdownSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 200); // Increased timeout to ensure rendering is complete
   };
 
-  const handleProviderClick = (selectedProvider: string) => {
-    if (provider === selectedProvider) {
-      setProvider('');
-    } else {
-      setProvider(selectedProvider);
+  const startBreakdownAnimation = () => {
+    setShowBreakdown(true);
+    setAnimationStep(0);
+    
+    // Create ref for breakdown section if not already created
+    const breakdownSection = document.getElementById('breakdown-section');
+    if (breakdownSection) {
+      // Removed auto-scrolling
     }
+    
+    const timer = setInterval(() => {
+      setAnimationStep(prev => {
+        if (prev >= 8) {
+          clearInterval(timer);
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, 300);
   };
+
+  useEffect(() => {
+    if (contractLength && provider && monthlyBill) {
+      setShowBreakdown(true);
+      startBreakdownAnimation();
+    } else {
+      hideBreakdown();
+    }
+  }, [contractLength, provider, monthlyBill]);
 
   const calculateMonthsRemaining = () => {
     if (!contractEndType) return 0;
@@ -195,83 +266,45 @@ const BuyoutCalculator: React.FC = () => {
   const breakdown = calculateBreakdown();
   const canBuyoutInFull = breakdown.customerPayment === 0;
 
-  const handleBillChange = (value: string) => {
-    setMonthlyBill(value);
-  };
-
   const handleConfirmBill = (value: string) => {
     setMonthlyBill(value);
     setIsEditingBill(false);
-    setShowBreakdown(true);
-    setAnimationStep(1);
   };
 
   const handleEditBill = () => {
     setIsEditingBill(true);
     setShowBreakdown(false);
-    setAnimationStep(0);
   };
 
   const handleClearBill = () => {
     setMonthlyBill('');
     setIsEditingBill(false);
     setShowBreakdown(false);
+  };
+
+  const [showParticles, setShowParticles] = useState(false);
+
+  useEffect(() => {
+    if (canBuyoutInFull && showBreakdown) {
+      setShowParticles(true);
+      const timer = setTimeout(() => {
+        setShowParticles(false);
+      }, 5000); // Hide particles after 5 seconds
+      return () => clearTimeout(timer);
+    } else {
+      setShowParticles(false);
+    }
+  }, [canBuyoutInFull, showBreakdown]);
+
+  const hideBreakdown = () => {
+    setShowBreakdown(false);
     setAnimationStep(0);
   };
 
-  useEffect(() => {
-    const hasRequiredFields = monthlyBill !== '' && contractLength !== null;
-    setShowBreakdown(hasRequiredFields);
-    if (hasRequiredFields) {
-      // Reset animation sequence
-      setAnimationStep(0);
-      const timer = setInterval(() => {
-        setAnimationStep(prev => {
-          if (prev >= 8) { // Total number of animated elements
-            clearInterval(timer);
-            return prev;
-          }
-          return prev + 1;
-        });
-      }, 200); // Delay between each animation
-      return () => clearInterval(timer);
-    }
-  }, [monthlyBill, contractLength]);
-
   return (
-    <div className="w-full max-w-4xl mx-auto p-4 space-y-8">
+    <div className="w-full max-w-3xl mx-auto p-4 space-y-6">
       {/* Monthly Bill Input */}
       <div className="relative">
-        <div 
-          className={cn(
-            "w-full p-4 rounded-lg bg-white/5 backdrop-blur-sm cursor-pointer hover:bg-white/10 transition-colors",
-            "flex items-center justify-between"
-          )}
-          onClick={() => !isEditingBill && setIsEditingBill(true)}
-        >
-          <div>
-            <label className="text-sm text-gray-400">Monthly Bill</label>
-            <div className="text-2xl font-bold">
-              £{monthlyBill ? parseFloat(monthlyBill).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
-            </div>
-          </div>
-          <Edit2 className="w-5 h-5 text-gray-400" />
-        </div>
-
-        {monthlyBill && !isEditingBill && (
-          <Link 
-            to="/price-comparison"
-            className={cn(
-              "mt-2 text-sm font-medium inline-flex items-center gap-1",
-              "text-primary hover:text-primary/80 transition-colors"
-            )}
-          >
-            Compare Packages
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        )}
-
-        {/* Number Pad Modal */}
         <AnimatePresence>
           {isEditingBill && (
             <>
@@ -302,21 +335,33 @@ const BuyoutCalculator: React.FC = () => {
                 </div>
 
                 <NumberPad
-                  value={monthlyBill}
-                  onChange={setMonthlyBill}
+                  value={monthlyBill || ''}
+                  onChange={handleBillChange}
                   maxValue={999.99}
                   minValue={0}
                   prefix="£"
-                  onConfirm={() => {
-                    setIsEditingBill(false);
-                    setShowBreakdown(true);
-                    setAnimationStep(1);
-                  }}
+                  onConfirm={handleBillSubmit}
                 />
               </motion.div>
             </>
           )}
         </AnimatePresence>
+
+        <div
+          onClick={() => setIsEditingBill(true)}
+          className={cn(
+            "w-full p-4 rounded-lg bg-white/5 backdrop-blur-sm cursor-pointer hover:bg-white/10 transition-colors",
+            "flex items-center justify-between"
+          )}
+        >
+          <div>
+            <label className="text-sm text-gray-400">Monthly Bill</label>
+            <div className="text-2xl font-bold">
+              £{monthlyBill ? parseFloat(monthlyBill).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
+            </div>
+          </div>
+          <Edit2 className="w-5 h-5 text-gray-400" />
+        </div>
       </div>
 
       {/* Provider Selection */}
@@ -344,7 +389,7 @@ const BuyoutCalculator: React.FC = () => {
         </div>
       </motion.div>
 
-      {/* Contract Length */}
+      {/* Contract Length Section */}
       <motion.div
         className="rounded-xl bg-card/50 p-4 sm:p-6 space-y-4"
         animate={{ opacity: monthlyBill ? 1 : 0.8 }}
@@ -367,12 +412,12 @@ const BuyoutCalculator: React.FC = () => {
             </motion.button>
           ))}
         </div>
-        
+
         <div className="relative">
           <input
             type="date"
             value={customDate}
-            onChange={handleCustomDateChange}
+            onChange={(e) => handleCustomDateChange(e.target.value)}
             className={`w-full p-4 rounded-lg bg-transparent border transition-all ${
               contractEndType === 'custom'
                 ? 'border-primary bg-primary/5'
@@ -383,11 +428,11 @@ const BuyoutCalculator: React.FC = () => {
         </div>
       </motion.div>
 
-      {/* Summary */}
       <AnimatePresence>
         {showBreakdown && (
           <motion.div
-            className={`p-4 sm:p-6 rounded-xl border-2 space-y-4 ${
+            id="breakdown-section"
+            className={`relative p-4 sm:p-6 rounded-xl border-2 space-y-4 overflow-hidden ${
               canBuyoutInFull 
                 ? 'bg-green-500/5 border-green-500/20' 
                 : 'bg-yellow-500/5 border-yellow-500/20'
@@ -397,11 +442,16 @@ const BuyoutCalculator: React.FC = () => {
             exit={{ opacity: 0, height: 0, y: 20 }}
             transition={{ duration: 0.3 }}
           >
-            <div className="flex items-center justify-between">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+              className="flex items-center justify-between relative z-10"
+            >
               <h3 className="text-lg font-medium">Breakdown</h3>
-            </div>
+            </motion.div>
 
-            <motion.div className="space-y-4 overflow-hidden">
+            <div className="space-y-4 overflow-hidden relative z-10">
               <div className="grid gap-3">
                 {[
                   {
@@ -502,7 +552,7 @@ const BuyoutCalculator: React.FC = () => {
                   View Our Packages
                 </Link>
               </motion.div>
-            </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

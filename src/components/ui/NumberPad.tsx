@@ -7,12 +7,14 @@ interface NumberPadProps {
   value: string;
   onChange: (value: string) => void;
   onBlur?: () => void;
-  onConfirm?: () => void;
+  onConfirm?: (value: string) => void;
+  onSubmit?: (value: string) => void;
   maxValue?: number;
   minValue?: number;
   className?: string;
   prefix?: string;
   disabled?: boolean;
+  showSubmitButton?: boolean;
 }
 
 const NumberPad: React.FC<NumberPadProps> = ({
@@ -20,11 +22,13 @@ const NumberPad: React.FC<NumberPadProps> = ({
   onChange,
   onBlur,
   onConfirm,
+  onSubmit,
   maxValue = 999999.99,
   minValue = 0,
   className,
   prefix = '£',
   disabled = false,
+  showSubmitButton = false,
 }) => {
   const [displayValue, setDisplayValue] = useState(value);
   const [showError, setShowError] = useState(false);
@@ -48,7 +52,7 @@ const NumberPad: React.FC<NumberPadProps> = ({
     if (disabled) return;
 
     let newValue = unformatNumber(displayValue);
-    
+
     // Handle decimal point
     if (num === '.') {
       if (newValue.includes('.')) return;
@@ -61,7 +65,7 @@ const NumberPad: React.FC<NumberPadProps> = ({
         newValue = newValue + num;
       }
     }
-    
+
     // Validate max decimal places
     const parts = newValue.split('.');
     if (parts[1] && parts[1].length > 2) return;
@@ -79,6 +83,7 @@ const NumberPad: React.FC<NumberPadProps> = ({
 
   const handleDelete = () => {
     if (disabled) return;
+
     const unformatted = unformatNumber(displayValue);
     const newValue = unformatted.slice(0, -1);
     setDisplayValue(formatNumber(newValue) || '0');
@@ -206,9 +211,9 @@ const NumberPad: React.FC<NumberPadProps> = ({
           <Delete className="w-6 h-6 mx-auto" />
         </motion.button>
 
-        {/* Confirm Button - Full Width */}
+        {/* Action Button */}
         <motion.button
-          onClick={onConfirm}
+          onClick={() => onConfirm && onConfirm(displayValue)}
           className={cn(
             "col-span-3 p-4 text-xl font-semibold rounded-lg",
             "bg-primary/10 border border-primary/20",
@@ -225,6 +230,28 @@ const NumberPad: React.FC<NumberPadProps> = ({
         >
           <Check className="w-6 h-6 transition-transform hover:scale-110" />
         </motion.button>
+
+        {/* Submit Button */}
+        {showSubmitButton && (
+          <motion.button
+            onClick={() => onSubmit?.(value)}
+            className={cn(
+              "col-span-3 p-4 text-xl font-semibold rounded-lg",
+              "bg-primary/10 border border-primary/20",
+              "hover:bg-primary/20 hover:border-primary/30",
+              "active:bg-primary/30 transition-all duration-200",
+              "text-primary shadow-sm shadow-primary/10",
+              "flex items-center justify-center"
+            )}
+            variants={buttonVariants}
+            whileHover="hover"
+            whileTap="tap"
+            disabled={disabled}
+            aria-label="Submit"
+          >
+            Submit
+          </motion.button>
+        )}
       </div>
     </div>
   );
